@@ -1,8 +1,8 @@
 csv_path: ./pkl/jsonl/metadata.csv
 cache_path: .cache/jsonl
 filtering:
-  max_len: 256
-  min_len: 0
+  max_len: 512
+  min_len: 60
   # Selects a subset of examples. Useful for debugging.
   subset: null
   allowed_oligomer: [monomeric]

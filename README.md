@@ -9,7 +9,7 @@
 ![Static Badge](https://img.shields.io/badge/Pytorch-Lightning-yellow)
 ![Static Badge](https://img.shields.io/badge/Config-Hydra-blue)
 ![Static Badge](https://img.shields.io/badge/PRs-Welcom-green)
-![Star](https://img.shields.io/github/stars/BruthYU/Lit-ProteinDF?style=social&label=Star)
+![Star](https://img.shields.io/github/stars/BruthYU/Lit-ProteinDGM?style=social&label=Star)
 
 </div>
 

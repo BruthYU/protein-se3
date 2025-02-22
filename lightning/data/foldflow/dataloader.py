@@ -430,7 +430,7 @@ class NewDistributedSampler(data.Sampler):
             self._missing_pdbs = 0
 
             def cluster_lookup(pdb):
-                pdb = pdb.upper()
+                pdb = pdb.split(".")[0].upper()
                 if pdb not in self._pdb_to_cluster:
                     self._pdb_to_cluster[pdb] = self._max_cluster + 1
                     self._max_cluster += 1

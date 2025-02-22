@@ -57,7 +57,7 @@ def run(conf: DictConfig) -> None:
         # Change wandb working dir to hydra chdir
         os.environ["WANDB_DIR"] = os.path.abspath(os.getcwd())
         wandb.login(key="7878871205533d1968d0e0736c7a47eb50d4ac69")
-        pl_logger = WandbLogger(project=f"Lit-ProteinDF", log_model='all')
+        pl_logger = WandbLogger(project=f"Lit-ProteinDGM", log_model='all')
 
 
     pl.seed_everything(conf.experiment.seed)
@@ -79,7 +79,7 @@ def run(conf: DictConfig) -> None:
         'callbacks': load_callbacks(conf),
         'use_distributed_sampler': conf.experiment.use_distributed_sampler,
         'check_val_every_n_epoch': conf.experiment.check_val_every_n_epoch,
-        'logger': pl_logger
+        'logger': pl_logger,
     }
 
     trainer = Trainer(**trainer_config)

@@ -19,8 +19,8 @@ dataset:
   add_plddt_mask: False
   inpainting_percent: 1.0
 
-  samples_per_eval_length: 5
-  num_eval_lengths: 8
+  samples_per_eval_length: 4
+  num_eval_lengths: 10
   max_eval_length: 256
 
   # Scaffolding parameters
