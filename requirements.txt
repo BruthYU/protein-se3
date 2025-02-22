@@ -1,0 +1,29 @@
+pytorch_lightning==2.0.7
+numpy==1.22.4
+hydra-core==1.3.2
+wandb==0.18.7
+lmdb==1.5.1
+dm-tree==0.1.7
+scipy==1.10.1
+biopython==1.80
+pandas==1.5.2
+ipdb==0.13.11
+ml_collections==0.1.1
+mdtraj==1.10.2
+openmm==8.1.1
+git+https://github.com/openmm/pdbfixer.git@v1.8.1
+tmtools==0.0.2
+POT==0.9.4
+einops==0.6.0
+geomstats==2.7.0
+gputil==1.4.0
+einops
+torch==2.1.0
+opt_einsum==3.4.0
+e3nn==0.3.3
+pynvml==11.0.0
+decorator==5.1.0
+
+# installation of following packages requires environment information
+# pip install torch-scatter -f https://data.pyg.org/whl/torch-2.1.0+cu118.html
+# pip install  dgl -f https://data.dgl.ai/wheels/torch-2.1/cu118/repo.html

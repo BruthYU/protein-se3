@@ -1,0 +1,238 @@
+# @package _global_
+method_name: frameflow
+dataset:
+  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/jsonl
+  cluster_path: ${hydra:runtime.cwd}/data/clusters-by-entity-30.txt
+  # Available tasks: hallucination, inpainting
+  task: hallucination
+  seed: 123
+  # Available tasks: pdb, scope
+  dataset: pdb
+  loader:
+    num_workers: 4
+    prefetch_factor: 10
+  sampler:
+    # Setting for 48GB GPUs
+    max_batch_size: 8
+    max_num_res_squared: 400_000
+
+  add_plddt_mask: False
+  inpainting_percent: 1.0
+
+  samples_per_eval_length: 5
+  num_eval_lengths: 8
+  max_eval_length: 256
+
+  # Scaffolding parameters
+  min_motif_percent: 0.05
+  max_motif_percent: 0.5
+  max_motif_n_seg: 4
+  # contiguous_percent: 0.5
+
+model:
+
+
+  node_embed_size: 256
+  edge_embed_size: 128
+  symmetric: False
+  node_features:
+    c_s: ${model.node_embed_size}
+    c_pos_emb: 128
+    c_timestep_emb: 128
+    max_num_res: 2000
+    timestep_int: 1000
+    embed_chain: False
+  edge_features:
+    single_bias_transition_n: 2
+    c_s: ${model.node_embed_size}
+    c_p: ${model.edge_embed_size}
+    relpos_k: 64
+    feat_dim: 64
+    num_bins: 22
+    self_condition: True
+    embed_chain: False
+    embed_diffuse_mask: True
+  ipa:
+    c_s: ${model.node_embed_size}
+    c_z: ${model.edge_embed_size}
+    c_hidden: 16
+    no_heads: 8
+    no_qk_points: 8
+    no_v_points: 12
+    seq_tfmr_num_heads: 4
+    seq_tfmr_num_layers: 2
+    num_blocks: 6
+
+
+
+experiment:
+  # Lightning Trainer Settings
+  resume_from_ckpt: False
+  resume_ckpt_path: null
+  strategy: ddp
+  num_epoch: 1000
+  check_val_every_n_epoch: 4
+  use_distributed_sampler: False
+  use_wandb: False
+  ckpt_freq: 10
+  lr_scheduler: null
+  monitor: valid/non_coil_percent
+
+  # Evaluation.
+  eval_dir: ./eval_outputs
+
+  # Experiment metadata
+  train_sample_mode: cluster_length_batch
+  debug: False
+  seed: ${dataset.seed}
+  num_devices: 2
+  warm_start: null
+  warm_start_cfg_override: True
+  training:
+    mask_plddt: True
+    bb_atom_scale: 0.1
+    trans_scale: 0.1
+    translation_loss_weight: 2.0
+    t_normalize_clip: 0.9
+    rotation_loss_weights: 1.0
+    aux_loss_weight: 0.0
+    aux_loss_use_bb_loss: True
+    aux_loss_use_pair_loss: True
+    aux_loss_t_pass: 0.5
+
+
+  optimizer:
+    lr: 0.0001
+
+
+  # Keep this null. Will be populated at runtime.
+  inference_dir: null
+
+
+
+interpolant:
+  cache_dir: ${hydra:runtime.cwd}/data/frameflow/.cache/
+  min_t: 1e-2
+
+  twisting:
+    use: False
+
+  rots:
+    corrupt: True
+    sample_schedule: exp
+    exp_rate: 10
+
+  trans:
+    corrupt: True
+    batch_ot: True
+    sample_schedule: linear
+    sample_temp: 1.0
+    vpsde_bmin: 0.1
+    vpsde_bmax: 20.0
+    potential: null
+    potential_t_scaling: False
+    rog:
+      weight: 10.0
+      cutoff: 5.0
+
+  sampling:
+    num_timesteps: 100
+    do_sde: False
+
+  self_condition: ${model.edge_features.self_condition}
+
+
+inference:
+  seed: 123
+  task: scaffolding
+  output_dir: frameflow_outputs/
+  ckpt_path: ${hydra:runtime.cwd}/resource/frameflow/last.ckpt
+  samples:
+    samples_per_length: 10
+    min_length: 60
+    max_length: 128
+    length_step: 1
+    overwrite: False
+    csv_path: ${hydra:runtime.cwd}/resource/frameflow/benchmark.csv
+    target_dir: ${hydra:runtime.cwd}/resource/frameflow/targets
+    samples_per_target: 10
+    num_batch: 1
+    # Subset of targets to scaffold.
+    target_subset: ['5YUI', '5IUS', '3IXT', '1BCF', '1QJG', '6X93', '1PRW', '1YCR', '5TPN'] # e.g. ['5TPN']
+    # Subset of lengths to sample. If null, sample all targets.
+    length_subset: null
+
+
+  #Task Specific Unconditional
+  unconditional:
+    interpolant:
+      min_t: 1e-2
+      rots:
+        corrupt: True
+        sample_schedule: exp
+        exp_rate: 10
+      trans:
+        corrupt: True
+        sample_schedule: linear
+      sampling:
+        num_timesteps: 100
+      self_condition: True
+      twisting:
+        use: False
+
+
+  #Task Specific Scaffolding
+  scaffolding:
+    interpolant:
+      min_t: 1e-2
+      rots:
+        corrupt: True
+        sample_schedule: exp
+        exp_rate: 10
+      trans:
+        corrupt: True
+        sample_schedule: linear
+      sampling:
+        num_timesteps: 100
+      self_condition: True
+      twisting:
+        use: False
+
+  #Task Specific Scaffolding-Guidance
+  scaffolding_guidance:
+    interpolant:
+      min_t: 1e-2
+      rots:
+        corrupt: True
+        sample_schedule: exp
+        exp_rate: 10
+      trans:
+        corrupt: True
+        sample_schedule: linear
+      sampling:
+        num_timesteps: 100
+      self_condition: True
+      twisting:
+        use: True
+        t_min: 0.2
+        scale: 1.
+        # scale_w_t: ot
+        r_t: 1
+        potential_trans: True
+        potential_rot: True
+        update_trans: True
+        update_rot: True
+        max_rot_grad_norm: 1000
+        align: True
+        motif_loc: False
+        max_offsets: 1000
+        # num_rots: 100
+        num_rots: 1
+        # scale_rots: math.inf
+        scale_rots: 0.
+        # scale_rots: 0.1
+        obs_noise: 0.
+
+
+
+

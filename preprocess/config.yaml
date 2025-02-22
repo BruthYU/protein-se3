@@ -1,0 +1,13 @@
+csv_path: ./pkl/jsonl/metadata.csv
+cache_path: .cache/jsonl
+filtering:
+  max_len: 256
+  min_len: 0
+  # Selects a subset of examples. Useful for debugging.
+  subset: null
+  allowed_oligomer: [monomeric]
+  max_helix_percent: 1.0
+  max_loop_percent: 0.5
+  min_beta_percent: -1.0
+  rog_quantile: 0.96
+num_csv_processors: 5
