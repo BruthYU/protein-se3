@@ -13,7 +13,7 @@ mdtraj==1.10.2
 openmm==8.1.1
 git+https://github.com/openmm/pdbfixer.git@v1.8.1
 tmtools==0.0.2
-POT==0.9.4
+POT==0.9.5
 einops==0.6.0
 geomstats==2.7.0
 gputil==1.4.0

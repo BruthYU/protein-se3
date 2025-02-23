@@ -29,7 +29,7 @@ flow_matcher:
   flow_rot: True
   ot_fn: exact
   reg: 0.05 # only used if ot_fn is 'sinkhorn'.
-  ot_plan: False # Using OT plan to pair the noise with data. Default False.
+  ot_plan: True # Using OT plan to pair the noise with data. Default False.
   stochastic_paths: False # Switches to stochastic
 
   # R(3) Flow Matcher arguments
@@ -84,8 +84,8 @@ experiment:
   resume_ckpt_path: null
   strategy: ddp
   use_distributed_sampler: False
-  num_epoch: 1000
-  check_val_every_n_epoch: 4
+  num_epoch: 800
+  check_val_every_n_epoch: 25
   use_wandb: False
   ckpt_freq: 10
   lr_scheduler: step
@@ -102,7 +102,7 @@ experiment:
 
   # Training arguments
   log_freq: 100
-  batch_size: 16
+  batch_size: 256
   eval_batch_size: ${dataset.samples_per_eval_length}
   num_loader_workers: 12
   torch_num_threads: 8

@@ -25,7 +25,7 @@ import sys
 sys.path.append('..')
 print(sys.path)
 LOG = logging.getLogger(__name__)
-
+os.environ['TORCH_USE_CUDA_DSA'] = "1"
 
 
 
@@ -39,7 +39,8 @@ def load_callbacks(conf):
         mode='min',
         save_last=True,
         every_n_epochs=conf.experiment.ckpt_freq,
-        dirpath=f'./checkpoints'
+        dirpath=f'./checkpoints',
+        save_on_train_epoch_end=True
     ))
     # Learning Rate Callback
     if conf.experiment.lr_scheduler:

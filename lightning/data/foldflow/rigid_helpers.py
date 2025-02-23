@@ -22,7 +22,10 @@ def extract_trans_rots_mat(rigid: ru.Rigid):
 
 
 def assemble_rigid_mat(rotmat, trans):
+    if not torch.is_tensor(rotmat):
+        rotmat = torch.from_numpy(rotmat)
+        trans = torch.from_numpy(trans)
     return ru.Rigid(
-        rots=ru.Rotation(rot_mats=torch.tensor(rotmat)),
-        trans=torch.tensor(trans),
+        rots=ru.Rotation(rot_mats=rotmat),
+        trans=trans,
     )

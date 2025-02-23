@@ -149,7 +149,7 @@ class foldflow_Dataset(data.Dataset):
 
                 # get the features, transform them to Rigid, and extract their translation and rotation.
                 list_feat = [
-                    self.lmdb_cache.get_cache_csv_row(i, sample_subset)[0] for i in range(n_samples)
+                    self.lmdb_cache.get_cache_csv_row(sub_index)[0] for sub_index in sample_subset['index']
                 ]
                 list_trans_rot = [
                     extract_trans_rots_mat(
@@ -193,12 +193,14 @@ class foldflow_Dataset(data.Dataset):
                         ground_cost[i, j] = s03_dist**2 + r3_dist**2
                         ground_cost[j, i] = ground_cost[i, j]
 
+                ground_cost = ground_cost.numpy()
                 # OT with uniform distributions over the set of pdbs
                 a = pot.unif(n_samples, type_as=ground_cost)
                 b = pot.unif(n_samples, type_as=ground_cost)
-                T = self.ot_fn(
+                T = torch.from_numpy(self.ot_fn(
                     a, b, ground_cost
-                )  # NOTE: `ground_cost` is the squared distance on SE(3)^N.
+                ))  # NOTE: `ground_cost` is the squared distance on SE(3)^N.
+
 
                 # sample using the plan
                 # pick one random indices for the pdb returned by __getitem__
