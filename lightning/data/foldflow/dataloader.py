@@ -210,7 +210,6 @@ def create_data_loader(
     np_collate=False,
     max_squared_res=1e6,
     length_batch=False,
-    drop_last=False,
     prefetch_factor=2,
     num_gpus=1,
 ):
@@ -241,7 +240,6 @@ def create_data_loader(
         prefetch_factor=prefetch_factor,
         persistent_workers=persistent_workers,
         pin_memory=True,
-        drop_last=drop_last,
         # Need fork https://github.com/facebookresearch/hydra/issues/964
         multiprocessing_context="fork"
         if num_workers != 0
@@ -399,7 +397,7 @@ class NewDistributedSampler(data.Sampler):
                  sample_mode,
                  num_replicas: Optional[int] = None,
                  rank: Optional[int] = None,
-                 seed: int = 0, drop_last: bool = False, is_training: bool = True) -> None:
+                 seed: int = 0, is_training: bool = True) -> None:
         if num_replicas is None:
             if not dist.is_available():
                 raise RuntimeError("Requires distributed package to be available")
@@ -450,7 +448,6 @@ class NewDistributedSampler(data.Sampler):
         self.epoch = 0
         assert batch_size % num_replicas == 0, "Batch size must be divisible by num_gpus"
 
-        self.drop_last = drop_last
         if self._is_training:
             start_sample_list = self.get_train_sample_list()
         else:
@@ -459,7 +456,7 @@ class NewDistributedSampler(data.Sampler):
         self._repeated_size = len(start_sample_list)
         # If the dataset length is evenly divisible by # of replicas, then there
         # is no need to drop any data, since the dataset will be split equally.
-        if self.drop_last and self._repeated_size % self.num_replicas != 0:  # type: ignore[arg-type]
+        if self._repeated_size % self.num_replicas != 0:  # type: ignore[arg-type]
             # Split to nearest available length that is evenly divisible.
             # This is to ensure each rank receives the same amount of data when
             # using this Sampler.
@@ -529,21 +526,18 @@ class NewDistributedSampler(data.Sampler):
             indices = self.get_train_sample_list()
         else:
             indices = self.get_eval_sample_list()
-        if not self.drop_last:
+
+        if len(indices) < self.total_size:
             # add extra samples to make it evenly divisible
             padding_size = self.total_size - len(indices)
-            if padding_size == 0:
-                pass
-            elif padding_size <= len(indices):
+            if padding_size <= len(indices):
                 indices = np.concatenate((indices, indices[:padding_size]), axis=0)
             else:
                 indices = np.concatenate(
                     (indices, np.repeat(indices, math.ceil(padding_size / len(indices)))[:padding_size]), axis=0)
 
-        else:
-            # remove tail of data to make it evenly divisible.
-            indices = indices[:self.total_size]
-        assert len(indices) == self.total_size
+        # drop last items if len(indices) > self.total_size
+        indices = indices[:self.total_size]
 
         indices = indices[self.rank:self.total_size:self.num_replicas]
         assert len(indices) == self.num_samples

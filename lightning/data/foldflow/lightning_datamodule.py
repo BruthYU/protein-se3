@@ -67,7 +67,6 @@ class foldflow_Lightning_Datamodule(pl.LightningDataModule):
             batch_size=self.exp_conf.batch_size // train_sampler.num_replicas,
             shuffle=False,
             num_workers=num_workers,
-            drop_last=False,
             max_squared_res=self.exp_conf.max_squared_res,
         )
         return train_loader
@@ -89,7 +88,6 @@ class foldflow_Lightning_Datamodule(pl.LightningDataModule):
             batch_size=self.data_conf.samples_per_eval_length // valid_sampler.num_replicas,
             shuffle=False,
             num_workers=num_workers,
-            drop_last=False,
         )
         return valid_loader
 

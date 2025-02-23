@@ -84,7 +84,7 @@ experiment:
   resume_ckpt_path: null
   strategy: ddp
   use_distributed_sampler: False
-  num_epoch: 500
+  num_epoch: 1000
   check_val_every_n_epoch: 4
   use_wandb: False
   ckpt_freq: 10
@@ -118,7 +118,7 @@ experiment:
   prefetch_factor: 100
   use_gpu: True
   num_gpus: 1
-  sample_mode: cluster_time_batch
+  sample_mode: cluster_length_batch
 
 
 

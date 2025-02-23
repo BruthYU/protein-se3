@@ -74,7 +74,7 @@ def run(conf: DictConfig) -> None:
         'max_epochs': conf.experiment.num_epoch,  # Maximum number of epochs to train for
         'num_nodes': 1,  # Number of nodes to use for distributed training
         "strategy": conf.experiment.strategy,
-        "accumulate_grad_batches": 1,
+        "accumulate_grad_batches": 2,
         'accelerator': 'cuda',
         'callbacks': load_callbacks(conf),
         'use_distributed_sampler': conf.experiment.use_distributed_sampler,

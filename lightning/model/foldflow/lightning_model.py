@@ -25,7 +25,9 @@ from lightning.data.foldflow import se3_fm
 import copy
 import logging
 import time
+
 LOG = logging.getLogger(__name__)
+
 
 # TODO foldflow-model
 # TODO eval_fn
@@ -41,7 +43,6 @@ class foldflow_Lightning_Model(pl.LightningModule):
         self.flow_matcher = se3_fm.SE3FlowMatcher(self.fm_conf)
         self.model = network.VectorFieldNetwork(self.model_conf, self.flow_matcher)
         self.validation_step_outputs = []
-
 
     def forward(self, batch, cond):
         model_out = self.model(batch)
@@ -71,12 +72,11 @@ class foldflow_Lightning_Model(pl.LightningModule):
         ckpt_eval_metrics = []
         for batch_eval_metrics in self.validation_step_outputs:
             ckpt_eval_metrics.extend(batch_eval_metrics)
-        eval_metrics_csv_path = os.path.join(self.exp_conf.eval_dir, f'epoch_{self.current_epoch}', f"validation_rank_{self.local_rank}_metrics.csv")
+        eval_metrics_csv_path = os.path.join(self.exp_conf.eval_dir, f'epoch_{self.current_epoch}',
+                                             f"validation_rank_{self.local_rank}_metrics.csv")
         ckpt_eval_metrics = pd.DataFrame(ckpt_eval_metrics)
         ckpt_eval_metrics.to_csv(eval_metrics_csv_path, index=False)
         self.validation_step_outputs.clear()
-
-
 
     def get_schedular(self, optimizer, lr_scheduler='onecycle'):
         if lr_scheduler == 'step':
@@ -88,7 +88,8 @@ class foldflow_Lightning_Model(pl.LightningModule):
                                               T_max=self.exp_conf.lr_decay_steps,
                                               eta_min=self.exp_conf.lr_decay_min_lr)
         elif lr_scheduler == 'onecycle':
-            scheduler = lrs.OneCycleLR(optimizer, max_lr=self.exp_conf.learning_rate, steps_per_epoch=self.exp_conf.steps_per_epoch,
+            scheduler = lrs.OneCycleLR(optimizer, max_lr=self.exp_conf.learning_rate,
+                                       steps_per_epoch=self.exp_conf.steps_per_epoch,
                                        epochs=self.exp_conf.num_epoch, three_phase=False)
 
         elif lr_scheduler == 'LambdaLR':
@@ -135,8 +136,8 @@ class foldflow_Lightning_Model(pl.LightningModule):
             aux_data: Additional logging data.
         """
         if (
-            self.model_conf.embed.embed_self_conditioning
-            and self.global_step % 2 == 1
+                self.model_conf.embed.embed_self_conditioning
+                and self.global_step % 2 == 1
         ):
             # if self.model_conf.embed.embed_self_conditioning and random.random() > 0.5:
             with torch.no_grad():
@@ -145,7 +146,6 @@ class foldflow_Lightning_Model(pl.LightningModule):
         _, gt_rot_u_t = self.flow_matcher._so3_fm.vectorfield(
             batch["rot_vectorfield"], batch["rot_t"], batch["t"]
         )
-
 
         model_out = self.model(batch)
         bb_mask = batch["res_mask"]
@@ -178,7 +178,7 @@ class foldflow_Lightning_Model(pl.LightningModule):
         ) / (loss_mask.sum(dim=-1) + 1e-10)
 
         trans_loss = trans_vectorfield_loss * (
-            batch["t"] > self.exp_conf.trans_x0_threshold
+                batch["t"] > self.exp_conf.trans_x0_threshold
         ) + trans_x0_loss * (batch["t"] <= self.exp_conf.trans_x0_threshold)
         trans_loss *= self.exp_conf.trans_loss_weight
         trans_loss *= int(self.fm_conf.flow_trans)
@@ -197,8 +197,8 @@ class foldflow_Lightning_Model(pl.LightningModule):
             pred_rot_v_t = hat_inv(pred_at_id)
         except ValueError as e:
             LOG.info(
-                f"Skew symmetric error gt {((gt_at_id + gt_at_id.transpose(-1, -2))**2).mean()} "
-                f"pred {((pred_at_id + pred_at_id.transpose(-1, -2))**2).mean()} Skipping rot loss"
+                f"Skew symmetric error gt {((gt_at_id + gt_at_id.transpose(-1, -2)) ** 2).mean()} "
+                f"pred {((pred_at_id + pred_at_id.transpose(-1, -2)) ** 2).mean()} Skipping rot loss"
             )
             gt_rot_u_t = torch.zeros_like(rot_t[..., 0])
             pred_rot_v_t = torch.zeros_like(rot_t[..., 0])
@@ -216,7 +216,7 @@ class foldflow_Lightning_Model(pl.LightningModule):
             # Separate loss on the axis
             axis_loss = (gt_rot_axis - pred_rot_axis) ** 2 * loss_mask[..., None]
             axis_loss = torch.sum(axis_loss, dim=(-1, -2)) / (
-                loss_mask.sum(dim=-1) + 1e-10
+                    loss_mask.sum(dim=-1) + 1e-10
             )
 
             # Separate loss on the angle
@@ -307,20 +307,18 @@ class foldflow_Lightning_Model(pl.LightningModule):
             "res_length": torch.mean(torch.sum(bb_mask, dim=-1)),
         }
 
-
-
         assert final_loss.shape == (batch_size,)
         assert batch_loss_mask.shape == (batch_size,)
         return normalize_loss(final_loss), aux_data
-    
+
     def eval_fn(
-        self,
-        batch,
-        batch_idx,
-        min_t=None,
-        num_t=None,
-        noise_scale=1.0,
-        context=None,
+            self,
+            batch,
+            batch_idx,
+            min_t=None,
+            num_t=None,
+            noise_scale=1.0,
+            context=None,
     ):
         valid_feats = batch
         batch_eval_metrics = []
@@ -351,9 +349,9 @@ class foldflow_Lightning_Model(pl.LightningModule):
             percent_flowed = np.sum(unpad_flow_mask) / num_res
 
             prot_path = os.path.join(
-                    self.exp_conf.eval_dir,
-                    f'epoch_{self.current_epoch}',
-                    f'Rank{self.local_rank}_B{batch_idx}S{i}_lmdbIndex_{lmdbIndex[i]}_len_{num_res}.pdb')
+                self.exp_conf.eval_dir,
+                f'epoch_{self.current_epoch}',
+                f'Rank{self.local_rank}_B{batch_idx}S{i}_lmdbIndex_{lmdbIndex[i]}_len_{num_res}.pdb')
 
             # Extract argmax predicted aatype
             saved_path = au.write_prot_to_pdb(
@@ -361,7 +359,6 @@ class foldflow_Lightning_Model(pl.LightningModule):
                 prot_path,
                 b_factors=np.tile(1 - unpad_fixed_mask[..., None], 37) * 100,
             )
-
 
             try:
                 # Including TM_Score
@@ -397,17 +394,16 @@ class foldflow_Lightning_Model(pl.LightningModule):
         feats["trans_vectorfield_scaling"] = trans_vectorfield_scaling * t_placeholder
         return feats
 
-
     def inference_fn(
-        self,
-        data_init,
-        num_t=None,
-        min_t=None,
-        center=True,
-        aux_traj=False,
-        self_condition=True,
-        noise_scale=1.0,
-        context=None,
+            self,
+            data_init,
+            num_t=None,
+            min_t=None,
+            center=True,
+            aux_traj=False,
+            self_condition=True,
+            noise_scale=1.0,
+            context=None,
     ):
         """Inference function.
 
@@ -469,8 +465,8 @@ class foldflow_Lightning_Model(pl.LightningModule):
                 gt_trans_0 = sample_feats["rigids_t"][..., 4:]
                 pred_trans_0 = rigid_pred[..., 4:]
                 trans_pred_0 = (
-                    flow_mask[..., None] * pred_trans_0
-                    + fixed_mask[..., None] * gt_trans_0
+                        flow_mask[..., None] * pred_trans_0
+                        + fixed_mask[..., None] * gt_trans_0
                 )
                 psi_pred = model_out["psi"]
                 if aux_traj:
