@@ -13,6 +13,10 @@ dataset:
     max_motif_percent: 0.5
     # contiguous_percent: 0.5
     max_motif_n_seg: 4
+    sampler:
+      max_batch_size: 256
+      max_num_res_squared: 500_000
+
 
 inference:
   input_pdb: null
@@ -167,7 +171,14 @@ experiment:
   lr_scheduler: step
   monitor: train_loss
 
+  optimizer:
+    lr: 0.0005
 
+  loader:
+    num_workers: 4
+    prefetch_factor: 10
+
+  train_sample_mode: cluster_length_batch
 
   # Experiment metadata
   seed: 111
@@ -178,7 +189,6 @@ experiment:
 
   # Training arguments
   log_freq: 1000
-  batch_size: 8
   steps_per_epoch: null
   num_loader_workers: 5
 
@@ -186,4 +196,4 @@ experiment:
   max_squared_res: 500000
   prefetch_factor: 100
   use_gpu: False
-  train_sample_mode: time_batch
+

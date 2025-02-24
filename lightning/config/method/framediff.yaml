@@ -68,8 +68,8 @@ experiment:
   resume_ckpt_path: null
   strategy: ddp_find_unused_parameters_true
   use_distributed_sampler: False
-  check_val_every_n_epoch: 4
-  num_epoch: 500
+  check_val_every_n_epoch: 25
+  num_epoch: 800
   use_wandb: False
   ckpt_freq: 10
   lr_scheduler: step
@@ -86,7 +86,7 @@ experiment:
 
   # Training arguments
   log_freq: 1000
-  batch_size: 8
+  batch_size: 256
   steps_per_epoch: null
   num_loader_workers: 5
 
@@ -94,7 +94,7 @@ experiment:
   max_squared_res: 500000
   prefetch_factor: 100
   use_gpu: False
-  train_sample_mode: time_batch
+  train_sample_mode: cluster_length_batch
   # num_gpus: 1
 
 

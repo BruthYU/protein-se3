@@ -39,6 +39,7 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         self.model = self.initialize_model()
 
 
+
         self.validation_epoch_metrics = []
         self.validation_epoch_samples = []
         self._checkpoint_dir = None
@@ -63,6 +64,8 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         # print('This is inf_conf.ckpt_path')
         # print(self.ckpt_path)
         self.ckpt = torch.load(self.ckpt_path)
+
+
 
     def assemble_config_from_chk(self) -> None:
         """
@@ -110,6 +113,14 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         model = RoseTTAFoldModule(**self.conf.model, d_t1d=self.d_t1d, d_t2d=self.d_t2d, T=self.conf.diffuser.T)
         model.load_state_dict(self.ckpt['model_state_dict'], strict=True)
         return model
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.AdamW(
+            params=self.model.parameters(),
+            **self.exp_conf.optimizer
+        )
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10000, gamma=0.95)
+        return {'optimizer':optimizer, 'lr_scheduler':scheduler}
 
 
     def on_train_start(self):

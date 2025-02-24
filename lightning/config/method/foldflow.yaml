@@ -87,7 +87,7 @@ experiment:
   num_epoch: 800
   check_val_every_n_epoch: 25
   use_wandb: False
-  ckpt_freq: 10
+  ckpt_freq: 2
   lr_scheduler: step
   monitor: train_loss
 

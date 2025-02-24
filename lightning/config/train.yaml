@@ -1,5 +1,5 @@
 defaults:
-  - method: foldflow
+  - method: frameflow
 
 
 hydra:

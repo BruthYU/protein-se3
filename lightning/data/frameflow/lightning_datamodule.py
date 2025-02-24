@@ -18,6 +18,7 @@ class frameflow_Lightning_Datamodule(pl.LightningDataModule):
         self.conf = conf
         self.data_conf= conf.dataset
         self.method_name = conf.method_name
+        self.exp_conf = conf.experiment
         self.sample_mode = conf.experiment.train_sample_mode
         self.data_module = self.init_data_module(self.method_name)
         self.cache_module = self.init_cache_module(self.method_name)
@@ -37,7 +38,7 @@ class frameflow_Lightning_Datamodule(pl.LightningDataModule):
                                                     is_training=False, data_conf=self.data_conf)
 
     def train_dataloader(self, rank=None, num_replicas=None):
-        num_workers = self.data_conf.loader.num_workers
+        num_workers = self.exp_conf.loader.num_workers
         train_sampler = self.dataloader.NewBatchSampler(
             data_conf=self.data_conf,
             dataset=self.trainset,
@@ -48,13 +49,13 @@ class frameflow_Lightning_Datamodule(pl.LightningDataModule):
             self.trainset,
             batch_sampler=train_sampler,
             num_workers=num_workers,
-            prefetch_factor=None if num_workers == 0 else self.data_conf.loader.prefetch_factor,
+            prefetch_factor=None if num_workers == 0 else self.exp_conf.loader.prefetch_factor,
             pin_memory=False,
             persistent_workers=True if num_workers > 0 else False,
         )
 
     def val_dataloader(self, rank=None, num_replicas=None):
-        num_workers = self.data_conf.loader.num_workers
+        num_workers = self.exp_conf.loader.num_workers
         valid_sampler = self.dataloader.NewBatchSampler(
             data_conf=self.data_conf,
             dataset=self.valset,
@@ -65,7 +66,7 @@ class frameflow_Lightning_Datamodule(pl.LightningDataModule):
             self.valset,
             batch_sampler=valid_sampler,
             num_workers=num_workers,
-            prefetch_factor=None if num_workers == 0 else self.data_conf.loader.prefetch_factor,
+            prefetch_factor=None if num_workers == 0 else self.exp_conf.loader.prefetch_factor,
             pin_memory=False,
             persistent_workers=True if num_workers > 0 else False,
         )

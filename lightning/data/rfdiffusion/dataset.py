@@ -60,8 +60,10 @@ class LMDB_Cache:
         So we directly recover csv from the lmdb cache. 
         '''
         lmdb_series = [x[3] for x in result_tuples]
+
         self.csv = pd.DataFrame(lmdb_series).reset_index(drop=True)
-        self.csv.to_csv("lmdb_protein.csv", index=True)
+        self.csv = self.csv.reset_index()
+        self.csv.to_csv("lmdb_protein.csv", index=False)
 
         def _get_list(idx):
             return list(map(lambda x: x[idx], result_tuples))

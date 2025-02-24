@@ -6,15 +6,10 @@ dataset:
   # Available tasks: hallucination, inpainting
   task: hallucination
   seed: 123
-  # Available tasks: pdb, scope
-  dataset: pdb
-  loader:
-    num_workers: 4
-    prefetch_factor: 10
+
   sampler:
-    # Setting for 48GB GPUs
-    max_batch_size: 8
-    max_num_res_squared: 400_000
+    max_batch_size: 256
+    max_num_res_squared: 500_000
 
   add_plddt_mask: False
   inpainting_percent: 1.0
@@ -71,12 +66,12 @@ experiment:
   resume_ckpt_path: null
   strategy: ddp
   num_epoch: 1000
-  check_val_every_n_epoch: 4
+  check_val_every_n_epoch: 25
   use_distributed_sampler: False
   use_wandb: False
   ckpt_freq: 10
   lr_scheduler: null
-  monitor: valid/non_coil_percent
+  monitor: train_loss
 
   # Evaluation.
   eval_dir: ./eval_outputs
@@ -88,6 +83,9 @@ experiment:
   num_devices: 2
   warm_start: null
   warm_start_cfg_override: True
+  loader:
+    num_workers: 4
+    prefetch_factor: 10
   training:
     mask_plddt: True
     bb_atom_scale: 0.1
