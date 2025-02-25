@@ -179,6 +179,7 @@ experiment:
     prefetch_factor: 10
 
   train_sample_mode: cluster_length_batch
+  self_conditioning_percent: 0.5
 
   # Experiment metadata
   seed: 111
