@@ -68,12 +68,10 @@ are required (`{}_Sampler`).
 
 </details>
 
-## Tutorials
-Following instructions show you how to run training and inference with Lit-ProteinDGM.
-
+## Tutorial
 ---
-### Prepare Dataset
-Following this [README.md](preprocess/README.md) to preprocess and prepare datasets. 
+### Prepare Datasets
+Following this [README.md](../preprocess/README.md) to preprocess and prepare datasets. 
 ### Training
 - **Step 1: Configure Generative Model.** Lit-ProteinDGM currently supports *FrameDiff*, *FoldFLow*, *Genie2*,
 *FrameFlow* and *RFDiffusion*. You can choose any protein generative method (e.g. *Genie2*) by setting `config/train.yaml` as:
