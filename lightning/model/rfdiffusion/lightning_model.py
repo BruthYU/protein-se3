@@ -143,7 +143,7 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
 
     def training_step(self, batch, batch_idx, **kwargs):
         batch_t = batch['t'].squeeze() - 1
-        
+
         noisy_xyz = torch.stack([batch['fa_stack'][idx, t] for idx,t in enumerate(batch_t)])
 
 

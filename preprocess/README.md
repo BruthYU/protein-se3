@@ -3,21 +3,10 @@ Lit-ProteinDGM pre-processes different protein files (`mmcif, pdb and jsonl`) in
 
 ### Directories Overview
 Raw data, intermediate data (metadata.csv and pickle files), unified lmdb-based cache files are organized in the following way.
-```
-preprocess
-├── .cache
-│   ├── jsonl/
-│   └── pdb/
-│   └── mmcif/
-├── pkl
-│   ├── jsonl/
-│   └── pdb/
-│   └── mmcif/
-├── raw
-│   ├── chain_set.jsonl
-│   └── pdb/
-│   └── mmcif/
-```
+
+
+![preprocess_dir](./preprocess_dir.png)
+
 
 
 ### 1. Raw Data
@@ -31,7 +20,7 @@ The first step of preprocessing is to place raw protein files into `raw` folder 
 │   │   ├── 12as.pdb
 │   │   └── 132l.pdb
 ```
-Then you can run (the `max_len` arg limits the max length of proteins to be processed): 
+Then you can run (all proteins in the `raw/pdb` folder will be processed): 
 
 ```
 python process_pdb_dataset.py 
