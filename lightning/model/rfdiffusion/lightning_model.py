@@ -12,6 +12,7 @@ from lightning.sampler.rfdiffusion import symmetry
 import lightning.data.rfdiffusion.denoiser as iu
 from lightning.model.rfdiffusion.potentials.manager import PotentialManager
 import logging
+import random
 import torch.nn.functional as nn
 from lightning.model.rfdiffusion import util
 from hydra.core.hydra_config import HydraConfig
@@ -35,6 +36,7 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         self.data_conf = conf.dataset
         self.diffuser_conf = conf.diffuser
         self.infer_conf = conf.inference
+
 
         self.model = self.initialize_model()
 
@@ -137,7 +139,14 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         )
         self._epoch_start_time = time.time()
 
+
+
     def training_step(self, batch, batch_idx, **kwargs):
+        batch_t = batch['t'].squeeze() - 1
+        
+        noisy_xyz = torch.stack([batch['fa_stack'][idx, t] for idx,t in enumerate(batch_t)])
+
+
         pass
 
 

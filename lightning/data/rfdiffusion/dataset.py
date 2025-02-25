@@ -157,9 +157,11 @@ class rfdiffusion_Dataset(data.Dataset):
         # Indexed from 1 to T
         # In the evaluation mode, set t to the last time step
         t = self.diffuser_conf.T
+        condition_t = None
         if self.is_training:
-            t = self._rng.integers(low=1, high=self.diffuser_conf.T)
-        return torch.ones(1, dtype=torch.long) * t
+            t = self._rng.integers(low=1, high=self.diffuser_conf.T + 1)
+            condition_t = self._rng.integers(low=1, high=self.diffuser_conf.T)
+        return torch.ones(1, dtype=torch.long) * t, torch.ones(1, dtype=torch.long) * condition_t
 
     def setup_inpainting(self, feats, rng):
         scaffold_mask = self._new_sample_scaffold_mask(feats, rng)
@@ -184,7 +186,7 @@ class rfdiffusion_Dataset(data.Dataset):
         else:
             raise ValueError(f'Unknown task {self.task}')
 
-        feats['t'] = self.sample_timestep_t()
+        feats['t'], feats['condition_t'] = self.sample_timestep_t()
         feats['input_seq_onehot'] = F.one_hot(feats['aatype'], num_classes=22)
         feats_xyz = torch.zeros((len(feats['xyz']), 27, 3))
         feats_xyz[:,:14,:] = feats['xyz']
