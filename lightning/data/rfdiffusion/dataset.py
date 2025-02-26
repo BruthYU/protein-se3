@@ -186,11 +186,11 @@ class rfdiffusion_Dataset(data.Dataset):
 
         feats['t'] = self.sample_timestep_t()
         feats['input_seq_onehot'] = F.one_hot(feats['aatype'], num_classes=22)
-        feats_xyz = torch.zeros((len(feats['xyz']), 27, 3))
+        feats_xyz = torch.zeros((len(feats['xyz']), 14, 3))
         feats_xyz[:,:14,:] = feats['xyz']
-        # fa_stack: (T, L, 27, 3) T = self.diffuser_conf.T
+        # fa_stack: (T, L, 14, 3) T = self.diffuser_conf.T
         feats['fa_stack'], feats['xyz_true'] = self.diffuser.diffuse_pose(feats_xyz, diffusion_mask=feats['motif_mask'].bool())
-
+        # feats['fa_stack'], feats['xyz_true'] = fa_stack[:, :, :14], xyz_true
 
         # Storing the csv index is helpful for debugging.
         feats['lmdbIndex'] = torch.ones(1, dtype=torch.long) * idx

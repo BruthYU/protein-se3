@@ -170,17 +170,17 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         ##################
         ### msa_masked ###
         ##################
-        msa_masked = torch.zeros((1, batch_size, L, 48))
-        msa_masked[:, :, :, :22] = seq[None, None]
-        msa_masked[:, :, :, 22:44] = seq[None, None]
+        msa_masked = torch.zeros((batch_size, 1, L, 48))
+        msa_masked[:, :, :, :22] = seq[:, None]
+        msa_masked[:, :, :, 22:44] = seq[:, None]
         msa_masked[:, :, 0, 46] = 1.0
         msa_masked[:, :, -1, 47] = 1.0
 
         ################
         ### msa_full ###
         ################
-        msa_full = torch.zeros((1, batch_size, L, 25))
-        msa_full[:, :, :, :22] = seq[None, None]
+        msa_full = torch.zeros((batch_size, 1, L, 25))
+        msa_full[:, :, :, :22] = seq[:, None]
         msa_full[:, :, 0, 23] = 1.0
         msa_full[:, :, -1, 24] = 1.0
 
@@ -189,7 +189,7 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         ########### 
 
         # Here we need to go from one hot with 22 classes to one hot with 21 classes (last plane is missing token)
-        t1d = torch.zeros((1, batch_size, L, 21))
+        t1d = torch.zeros((batch_size, 1, L, 21))
 
         seqt1d = torch.clone(seq)
         for batch_idx in range(batch_size):
@@ -198,21 +198,21 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
                     seqt1d[batch_idx, idx, 20] = 1
                     seqt1d[batch_idx, idx, 21] = 0
 
-        t1d[:, :, :, :21] = seqt1d[None, :, :, :21]
+        t1d[:, :, :, :21] = seqt1d[:, None, :, :21]
 
         # Set timestep feature to 1 where diffusion mask is True, else 1-t/T
         timefeature = 1 - t[:, None].repeat(1, L).float() / self.diffuser_conf.T
         timefeature[motif_mask] = 1
-        timefeature = timefeature[None, None, ..., None]
+        timefeature = timefeature[:, None, :, None]
 
-        t1d = torch.cat((t1d, timefeature), dim=-1).float()
+        t1d = torch.cat((t1d, timefeature.cpu()), dim=-1).float()
 
         #############
         ### xyz_t ###
         #############
-        xyz_t[~motif_mask, 3:, :] = float('nan')
-        xyz_t = xyz_t[None, None]
-        xyz_t = torch.cat((xyz_t, torch.full((1, batch_size, L, 13, 3), float('nan'))), dim=3)
+        xyz_t[~motif_mask][:, 3:, :] = float('nan')
+        xyz_t = xyz_t[:, None].cpu()
+
 
         ###########
         ### t2d ###
@@ -222,7 +222,7 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         ###########      
         ### idx ###
         ###########
-        idx = torch.tensor(list(range(L)))
+        idx = torch.tensor(list(range(L)))[None,:].repeat(batch_size, 1)
 
         ###############
         ### alpha_t ###
@@ -237,17 +237,17 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         alpha_t = torch.cat((alpha, alpha_mask), dim=-1).reshape(1, -1, L, 30)
 
         # put tensors on device
-        msa_masked = msa_masked
-        msa_full = msa_full
-        seq = seq
-        xyz_t = xyz_t
-        idx = idx
-        t1d = t1d
-        t2d = t2d
-        alpha_t = alpha_t
+        msa_masked = msa_masked.to(self.device)
+        msa_full = msa_full.to(self.device)
+        seq = seq.to(self.device)
+        xyz_t = xyz_t.to(self.device)
+        idx = idx.to(self.device)
+        t1d = t1d.to(self.device)
+        t2d = t2d.to(self.device)
+        alpha_t = alpha_t.to(self.device)
 
 
-        return msa_masked, msa_full, seq[None], torch.squeeze(xyz_t, dim=0), idx, t1d, t2d, xyz_t, alpha_t
+        return msa_masked, msa_full, seq, torch.squeeze(xyz_t, dim=1), idx, t1d, t2d, xyz_t, alpha_t
 
 
 
@@ -262,6 +262,7 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
 
             msa_masked, msa_full, seq_in, xt_in, idx_pdb, t1d, t2d, xyz_t, alpha_t = self._preprocess(
                 seq_init, x_t, t, motif_mask)
+            pass
         else:
             # train with self-conditioning, t+1 ranges from 1 to T, index from 0 to T-1
             t_plus_1 = batch['t'].squeeze() - 1
