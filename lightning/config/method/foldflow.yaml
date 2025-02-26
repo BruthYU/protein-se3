@@ -30,7 +30,7 @@ flow_matcher:
   ot_fn: exact
   reg: 0.05 # only used if ot_fn is 'sinkhorn'.
   ot_plan: True # Using OT plan to pair the noise with data. Default False.
-  stochastic_paths: False # Switches to stochastic
+  stochastic_paths: True # Switches to stochastic
 
   # R(3) Flow Matcher arguments
   r3:
@@ -170,7 +170,7 @@ inference:
 
   flow:
     # Number of steps.
-    num_t: 500
+    num_t: 100
     # Analogous to sampling temperature.
     noise_scale: 0.1
     # Final t.
@@ -178,7 +178,7 @@ inference:
 
   samples:
     # Number of backbone samples per sequence length.
-    samples_per_length: 5
+    samples_per_length: 1
     # Number of ESMFdold samples per backbone sample.
     seq_per_sample: 5
     # Minimum sequence length to sample.
@@ -187,4 +187,4 @@ inference:
     max_length: 110
     # gap between lengths to sample. i.e. this script will sample all lengths
     # in range(min_length, max_length, length_step)
-    length_step: 50
+    length_step: 2

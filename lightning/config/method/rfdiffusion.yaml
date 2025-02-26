@@ -14,7 +14,7 @@ dataset:
     # contiguous_percent: 0.5
     max_motif_n_seg: 4
     sampler:
-      max_batch_size: 256
+      max_batch_size: 2
       max_num_res_squared: 500_000
 
 

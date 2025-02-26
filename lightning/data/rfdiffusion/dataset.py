@@ -165,11 +165,12 @@ class rfdiffusion_Dataset(data.Dataset):
         scaffold_mask = self._new_sample_scaffold_mask(feats, rng)
         if 'plddt_mask' in feats:
             scaffold_mask = scaffold_mask* feats['plddt_mask']
-        feats['scaffold_mask'] = scaffold_mask
+        feats['res_mask'] = scaffold_mask
 
     def __getitem__(self, idx):
         chain_feats, gt_bb_rigid, pdb_name, csv_row = self.lmdb_cache.get_cache_csv_row(idx)
         feats = self.process_chain_feats(chain_feats)
+        feats['scaffold_mask'] = feats["res_mask"]
 
         if self.task == 'hallucination':
             feats["motif_mask"] = 1 - feats["res_mask"]
@@ -179,7 +180,7 @@ class rfdiffusion_Dataset(data.Dataset):
             else:
                 rng = self._rng if self.is_training else np.random.default_rng(seed=123)
                 self.setup_inpainting(feats, rng)
-                feats["motif_mask"] = 1 - feats['scaffold_mask']
+                feats["motif_mask"] = 1 - feats['res_mask']
 
         else:
             raise ValueError(f'Unknown task {self.task}')

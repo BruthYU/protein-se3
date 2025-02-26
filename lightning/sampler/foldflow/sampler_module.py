@@ -81,15 +81,15 @@ class foldflow_Sampler:
         where {output_dir} is created at initialization.
         """
         all_sample_lengths = range(
-            self.infer_conf.min_length,
-            self.infer_conf.max_length + 1,
-            self.infer_conf.length_step,
+            self.sample_conf.min_length,
+            self.sample_conf.max_length + 1,
+            self.sample_conf.length_step,
         )
         for sample_length in all_sample_lengths:
             length_dir = os.path.join(self.output_dir, f"length_{sample_length}")
             os.makedirs(length_dir, exist_ok=True)
             self.log.info(f"Sampling length {sample_length}: {length_dir}")
-            for sample_i in range(self.infer_conf.samples_per_length):
+            for sample_i in range(self.sample_conf.samples_per_length):
                 sample_dir = os.path.join(length_dir, f"sample_{sample_i}")
                 if os.path.isdir(sample_dir):
                     continue
@@ -135,9 +135,9 @@ class foldflow_Sampler:
 
         # Write sample.
         flow_mask = flow_mask.astype(bool)
-        sample_path = os.path.join(output_dir, "sample")
-        prot_traj_path = os.path.join(output_dir, "bb_traj")
-        x0_traj_path = os.path.join(output_dir, "x0_traj")
+        sample_path = os.path.join(output_dir, "sample.pdb")
+        prot_traj_path = os.path.join(output_dir, "bb_traj.pdb")
+        x0_traj_path = os.path.join(output_dir, "x0_traj.pdb")
 
         # Use b-factors to specify which residues are flowed.
         b_factors = np.tile((flow_mask * 100)[:, None], (1, 37))
@@ -198,7 +198,7 @@ class foldflow_Sampler:
             num_t=self.fm_conf.num_t,
             min_t=self.fm_conf.min_t,
             aux_traj=True,
-            noise_scale=self.conf.fm_conf.noise_scale,
+            noise_scale=self.fm_conf.noise_scale,
             context=context,
         )
         return tree.map_structure(lambda x: x[:, 0], sample_out)

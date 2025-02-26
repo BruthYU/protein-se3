@@ -232,9 +232,9 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
                                                     REF_ANGLES)
         alpha_mask = torch.logical_and(alpha_mask, ~torch.isnan(alpha[..., 0]))
         alpha[torch.isnan(alpha)] = 0.0
-        alpha = alpha.reshape(1, -1, L, 10, 2)
-        alpha_mask = alpha_mask.reshape(1, -1, L, 10, 1)
-        alpha_t = torch.cat((alpha, alpha_mask), dim=-1).reshape(1, -1, L, 30)
+        alpha = alpha.reshape(-1, 1, L, 10, 2)
+        alpha_mask = alpha_mask.reshape(-1, 1, L, 10, 1)
+        alpha_t = torch.cat((alpha, alpha_mask), dim=-1).reshape(-1, 1, L, 30)
 
         # put tensors on device
         msa_masked = msa_masked.to(self.device)
@@ -253,7 +253,7 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
 
     def training_step(self, batch, batch_idx, **kwargs):
 
-        seq_init = batch['input_seq_onehot']
+        seq_init = batch['input_seq_onehot'].float()
         motif_mask = batch['motif_mask'].bool()
         if self.exp_conf.self_conditioning_percent < random.random():
             # plain mode, t ranges from 1 to T, index from 0 to T-1
@@ -262,6 +262,21 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
 
             msa_masked, msa_full, seq_in, xt_in, idx_pdb, t1d, t2d, xyz_t, alpha_t = self._preprocess(
                 seq_init, x_t, t, motif_mask)
+            msa_prev, pair_prev, px0, state_prev, alpha, logits, plddt = self.model(msa_masked,
+                                msa_full,
+                                seq_in,
+                                xt_in,
+                                idx_pdb,
+                                t1d=t1d,
+                                t2d=t2d,
+                                xyz_t=xyz_t,
+                                alpha_t=alpha_t,
+                                msa_prev = None,
+                                pair_prev = None,
+                                state_prev = None,
+                                t=torch.tensor(t),
+                                return_infer=True,
+                                motif_mask=motif_mask)
             pass
         else:
             # train with self-conditioning, t+1 ranges from 1 to T, index from 0 to T-1

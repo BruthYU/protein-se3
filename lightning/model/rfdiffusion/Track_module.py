@@ -268,7 +268,7 @@ class Str2Str(nn.Module):
         state = shift['0'].reshape(B, L, -1) # (B, L, C)
         
         offset = shift['1'].reshape(B, L, 2, 3)
-        offset[:,motif_mask,...] = 0            # NOTE: motif mask is all zeros if not freeezing the motif 
+        offset[motif_mask,...] = 0            # NOTE: motif mask is all zeros if not freeezing the motif
 
         delTi = offset[:,:,0,:] / 10.0 # translation
         R = offset[:,:,1,:] / 100.0 # rotation
