@@ -296,7 +296,7 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         t = t_plus_1 - 1
 
 
-        # get_x_prev
+        # get_px0_prev
         plus_processed_info = self._preprocess(seq_init, x_t_plus_1, t_plus_1, motif_mask)
         with torch.no_grad():
             msa_prev, pair_prev, px0, state_prev, alpha_prev \
@@ -318,7 +318,7 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
 
         prev_pred = torch.clone(px0)
 
-        # prediction of X0
+        # get x_t from denoiser
         _, px0 = self.allatom(torch.argmax(plus_processed_info['seq_in'], dim=-1), px0, alpha_prev)
         px0 = px0.squeeze()[:, :14]
         # Generate Next Input
