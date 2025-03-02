@@ -89,6 +89,7 @@ experiment:
   batch_size: 256
   steps_per_epoch: null
   num_loader_workers: 5
+  precision: 32
 
   weight_decay: 0
   max_squared_res: 500000

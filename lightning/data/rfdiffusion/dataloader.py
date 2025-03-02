@@ -1,7 +1,8 @@
 import pdb
+import random
 
 import numpy as np
-from preprocess.tools import protein
+from preprocess.tools import so3_utils, chemical, residue_constants, protein
 import torch
 import logging
 import torch.distributed as dist
@@ -9,8 +10,18 @@ import math
 Protein = protein.Protein
 import warnings
 
+def _read_clusters(cluster_path):
+    pdb_to_cluster = {}
+    with open(cluster_path, "r") as f:
+        for i,line in enumerate(f):
+            for chain in line.split(' '):
+                pdb = chain.split('_')[0]
+                pdb_to_cluster[pdb.upper()] = i
+    return pdb_to_cluster
+
 
 class NewBatchSampler:
+
     def __init__(
             self,
             *,
@@ -53,11 +64,10 @@ class NewBatchSampler:
         # Each replica needs the same number of batches. We set the number
         # of batches to arbitrarily be the number of examples per replica.
         if self._is_training:
-            if 'cluster' in self._sample_mode:
-                num_batches = self._data_csv['cluster'].nunique()
+            if 'length' in self._sample_mode:
+                num_batches = self._data_csv['modeled_seq_len'].nunique()
             else:
                 num_batches = len(self._data_csv)
-            num_batches = math.ceil(num_batches / self.num_replicas)
         else:
             num_batches = self._data_conf.num_eval_lengths
             spel = self._data_conf.samples_per_eval_length
@@ -71,24 +81,21 @@ class NewBatchSampler:
     def get_train_sample_order(self):
         rng = torch.Generator()
         rng.manual_seed(self.seed + self.epoch)
-        if 'cluster' in self._data_csv:
-            cluster_sample = self._data_csv.groupby('cluster').sample(
-                1, random_state=self.seed + self.epoch)
-            indices = cluster_sample['index'].tolist()
-        else:
-            indices = self._data_csv['index'].tolist()
 
-        if self.shuffle:
-            new_order = torch.randperm(len(indices), generator=rng).numpy().tolist()
-            indices = [indices[i] for i in new_order]
 
         # csv on each replica
         if len(self._data_csv) > self.num_replicas:
-            replica_csv = self._data_csv.iloc[
-                indices[self.rank::self.num_replicas]
-            ]
+            replica_csv = self._data_csv[self.rank::self.num_replicas]
         else:
             replica_csv = self._data_csv
+
+
+        if 'cluster' in self._data_csv:
+            replica_csv = replica_csv.groupby('cluster').sample(
+                1, random_state=self.seed + self.epoch)
+
+
+
 
         # Each batch contains multiple proteins of the same length.
         sample_order = []
@@ -97,12 +104,10 @@ class NewBatchSampler:
                 self.max_batch_size,
                 self._data_conf.sampler.max_num_res_squared // seq_len ** 2 + 1,
             )
-            num_batches = math.ceil(len(len_df) / max_batch_size)
-            for i in range(num_batches):
-                batch_df = len_df.iloc[i * max_batch_size:(i + 1) * max_batch_size]
-                batch_indices = batch_df['index'].tolist()
-                batch_repeats = math.floor(max_batch_size / len(batch_indices))
-                sample_order.append(batch_indices * batch_repeats)
+            batch_df = len_df.iloc[:max_batch_size]
+            batch_indices = batch_df['index'].tolist()
+            batch_repeats = math.floor(max_batch_size / len(batch_indices))
+            sample_order.append(batch_indices * batch_repeats)
 
         # Remove any length bias (shuffle batch lists).
         new_order = torch.randperm(len(sample_order), generator=rng).numpy().tolist()
@@ -113,10 +118,10 @@ class NewBatchSampler:
     def get_eval_sample_order(self):
         # filter proteins based on lengths
         if self._data_conf.max_eval_length is None:
-            all_lengths = self._data_csv.modeled_seq_len
+            all_lengths = self._data_csv.modeled_seq_len.unique()
         else:
             all_lengths = self._data_csv.modeled_seq_len[
-                self._data_csv.modeled_seq_len <= self._data_conf.max_eval_length]
+                self._data_csv.modeled_seq_len <= self._data_conf.max_eval_length].unique()
 
         length_indices = (len(all_lengths) - 1) * np.linspace(
             0.0, 1.0, self._data_conf.num_eval_lengths)
@@ -166,15 +171,11 @@ class NewBatchSampler:
     def _create_batches(self):
         # Make sure all replicas have the same number of batches Otherwise leads to bugs.
         # See bugs with shuffling https://github.com/Lightning-AI/lightning/issues/10947
-        all_batches = []
-        num_augments = -1
-        while len(all_batches) < self._num_batches:
-            all_batches.extend(self._replica_epoch_batches())
-            num_augments += 1
-            if num_augments > 1000:
-                raise ValueError('Exceeded number of augmentations.')
-        if len(all_batches) >= self._num_batches:
-            all_batches = all_batches[:self._num_batches]
+        all_batches = self._replica_epoch_batches()
+        if len(all_batches) < self._num_batches:
+            padding_size = self._num_batches - len(all_batches)
+            all_batches.extend(random.sample(all_batches, padding_size))
+        all_batches = all_batches[:self._num_batches]
         self.sample_order = all_batches
         # print(f"----Sample Order: {self.sample_order}---")
 

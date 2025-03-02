@@ -170,6 +170,7 @@ experiment:
   ckpt_freq: 10
   lr_scheduler: step
   monitor: train_loss
+  precision: bf16
 
   optimizer:
     lr: 0.0005

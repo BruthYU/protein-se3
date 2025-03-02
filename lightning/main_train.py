@@ -71,7 +71,7 @@ def run(conf: DictConfig) -> None:
     trainer_config = {
         'devices': -1,  # Use all available GPUs
         # 'precision': 'bf16',  # Use 32-bit floating point precision
-        'precision': '32',
+        'precision': conf.experiment.precision,
         'max_epochs': conf.experiment.num_epoch,  # Maximum number of epochs to train for
         'num_nodes': 1,  # Number of nodes to use for distributed training
         "strategy": conf.experiment.strategy,

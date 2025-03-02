@@ -60,7 +60,7 @@ class MSAPairStr2MSA(nn.Module):
         # update query sequence feature (first sequence in the MSA) with feedbacks (state) from SE3
         state = self.norm_state(state)
         state = self.proj_state(state).reshape(B, 1, L, -1)
-        msa = msa.index_add(1, torch.tensor([0,], device=state.device), state)
+        msa = msa.index_add(1, torch.tensor([0,], device=state.device), state.type_as(msa))
         #
         # Apply row/column attention to msa & transform 
         msa = msa + self.drop_row(self.row_attn(msa, pair))
@@ -233,7 +233,7 @@ class Str2Str(nn.Module):
         nn.init.zeros_(self.embed_e1.bias)
         nn.init.zeros_(self.embed_e2.bias)
     
-    @torch.cuda.amp.autocast(enabled=False)
+    # @torch.cuda.amp.autocast(enabled=False)
     def forward(self, msa, pair, R_in, T_in, xyz, state, idx, motif_mask, top_k=64, eps=1e-5):
         B, N, L = msa.shape[:3]
 

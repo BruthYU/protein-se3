@@ -68,6 +68,7 @@ experiment:
   ckpt_freq: 10
   lr_scheduler: null
   monitor: train_loss
+  precision: 32
 
   # Experiment metadata
   seed: 100
