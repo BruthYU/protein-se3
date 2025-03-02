@@ -2,11 +2,11 @@
 method_name: genie2
 dataset:
   cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/jsonl
-  min_n_res: 60
-  max_n_res: 512
+  min_n_res: 50
+  max_n_res: 256
   max_n_chain: 1
 
-  motif_prob: 0.8
+  motif_prob: 1.0
   motif_min_pct_res: 0.05
   motif_max_pct_res: 0.5
   motif_min_n_seg: 1
@@ -63,15 +63,15 @@ experiment:
   strategy: ddp
   use_distributed_sampler: True
   use_wandb: False
-  check_val_every_n_epoch: 4
-  num_epoch: 5
+  check_val_every_n_epoch: null
+  num_epoch: 100
   ckpt_freq: 10
   lr_scheduler: null
   monitor: train_loss
 
   # Experiment metadata
   seed: 100
-  batch_size: 8
+  batch_size: 6 # 4 / num_gpus
   log_every_n_step: 1000
 
   condition_loss_weight: 1

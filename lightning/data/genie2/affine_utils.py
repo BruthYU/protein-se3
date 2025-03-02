@@ -350,15 +350,15 @@ def rot_to_quat(
 
     k = (1./3.) * torch.stack([torch.stack(t, dim=-1) for t in k], dim=-2)
 
-    _, vectors = torch.linalg.eigh(k)
+    # _, vectors = torch.linalg.eigh(k)
 
     # import pdb
     # pdb.set_trace()
-    #
-    # device = k.get_device()
-    # data = k.cpu()
-    # _, vectors = torch.linalg.eigh(data)
-    # vectors = vectors.to(device)
+
+    device = k.get_device()
+    data = k.cpu()
+    _, vectors = torch.linalg.eigh(data)
+    vectors = vectors.to(device)
 
 
     return vectors[..., -1]

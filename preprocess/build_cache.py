@@ -178,6 +178,7 @@ class BuildCache:
 
         filter_conf = self.data_conf.filtering
         pdb_csv = pd.read_csv(self.data_conf.csv_path)
+        self.all_n_rows = len(pdb_csv)
 
         if (
             filter_conf.allowed_oligomer is not None
@@ -229,9 +230,11 @@ class BuildCache:
         print(
             f"Starting to process dataset csv into memory "
         )
-        print(f"ROWS {len(self.csv)}")
+        print(f"Residue Length from {self.data_conf.filtering.min_len} to {self.data_conf.filtering.max_len}")
+        print(f"All Rows {self.all_n_rows}")
         # self.csv = self.csv.iloc[:500]
         print(f"Running only {len(self.csv)}")
+
 
         build_local_cache = True
         if os.path.isdir(self.cache_path):

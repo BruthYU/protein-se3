@@ -24,3 +24,4 @@ evaluate/eval_data
 /lightning/resource/rfdiffusion/official_ckpts/InpaintSeq_Fold_ckpt.pt
 /lightning/data/rfdiffusion/diffusion_backup.py
 /lightning/data/rfdiffusion/lmdb_protein.csv
+/lightning/.vscode

@@ -8,7 +8,7 @@ dataset:
   seed: 123
 
   sampler:
-    max_batch_size: 256
+    max_batch_size: 128 # effective batch_size: 128 * num_replica
     max_num_res_squared: 500_000
 
   add_plddt_mask: False
@@ -65,7 +65,7 @@ experiment:
   resume_from_ckpt: False
   resume_ckpt_path: null
   strategy: ddp
-  num_epoch: 1000
+  num_epoch: 800
   check_val_every_n_epoch: 25
   use_distributed_sampler: False
   use_wandb: False
