@@ -294,7 +294,7 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         x_t_plus_1 = torch.stack([batch['fa_stack'][idx, t_idx] for idx, t_idx in enumerate(t_plus_1)])
         # t ranges from 1 to T-1, index from 0 to T-2
         t = t_plus_1 - 1
-        x_t = torch.stack([batch['fa_stack'][idx, t_idx] for idx, t_idx in enumerate(t)])
+
 
         # get_x_prev
         plus_processed_info = self._preprocess(seq_init, x_t_plus_1, t_plus_1, motif_mask)
@@ -316,12 +316,26 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
                              return_raw=True,
                              motif_mask=motif_mask)
 
+        prev_pred = torch.clone(px0)
 
+        # prediction of X0
+        _, px0 = self.allatom(torch.argmax(plus_processed_info['seq_in'], dim=-1), px0, alpha_prev)
+        px0 = px0.squeeze()[:, :14]
+        # Generate Next Input
+        x_t, px0 = self.denoiser.get_next_pose(
+            xt=x_t_plus_1,
+            px0=px0,
+            t=t_plus_1,
+            diffusion_mask=self.mask_str.squeeze(),
+            align_motif=self.inf_conf.align_motif,
+            include_motif_sidechains=self.preprocess_conf.motif_sidechain_input
+        )
 
+        # Forward Pass
         processed_info = self._preprocess(seq_init, x_t, t, motif_mask)
         B, N, L = processed_info['xyz_t'].shape[:3]
         zeros = torch.zeros(B, N, L, 24, 3).float().to(processed_info['xyz_t'].device)
-        processed_info['xyz_t'] = torch.cat((px0.unsqueeze(1), zeros), dim=-2)  # [B,T,L,27,3]
+        processed_info['xyz_t'] = torch.cat((prev_pred.unsqueeze(1), zeros), dim=-2)  # [B,T,L,27,3]
         t2d_44 = xyz_to_t2d(processed_info['xyz_t'])  # [B,T,L,L,44]
         # No effect if t2d is only dim 44
         processed_info['t2d'][...,:44] = t2d_44
