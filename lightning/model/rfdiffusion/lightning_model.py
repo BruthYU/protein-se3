@@ -246,46 +246,109 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         t2d = t2d.to(self.device)
         alpha_t = alpha_t.to(self.device)
 
+        processed_info = {'msa_masked':msa_masked, 'msa_full': msa_full, 'seq_in': seq,
+                          'xt_in': torch.squeeze(xyz_t, dim=1), 'idx_pdb':idx,
+                          't1d': t1d, 't2d':t2d, 'xyz_t':xyz_t, 'alpha_t': alpha_t}
 
-        return msa_masked, msa_full, seq, torch.squeeze(xyz_t, dim=1), idx, t1d, t2d, xyz_t, alpha_t
 
+        # return msa_masked, msa_full, seq, torch.squeeze(xyz_t, dim=1), idx, t1d, t2d, xyz_t, alpha_t
+        return processed_info
+
+
+    def loss_fn_normal(self, batch):
+        seq_init = batch['input_seq_onehot'].float()
+        motif_mask = batch['motif_mask'].bool()
+        # plain mode, t ranges from 1 to T, index from 0 to T-1
+        t = batch['t'].squeeze() - 1
+        x_t = torch.stack([batch['fa_stack'][idx, t_idx] for idx, t_idx in enumerate(t)])
+        processed_info = self._preprocess(seq_init, x_t, t, motif_mask)
+
+        processed_info['xyz_t'] = torch.zeros_like(processed_info['xyz_t'])
+        t2d_44 = torch.zeros_like(processed_info['t2d'])
+        # No effect if t2d is only dim 44
+        processed_info['t2d'][...,:44] = t2d_44
+
+        logits, logits_aa, logits_exp, xyz, alpha_s, lddt \
+            = self.model(processed_info['msa_masked'],
+                         processed_info['msa_full'],
+                         processed_info['seq_in'],
+                         processed_info['xt_in'],
+                         processed_info['idx_pdb'],
+                         t1d=processed_info['t1d'],
+                         t2d=processed_info['t2d'],
+                         xyz_t=processed_info['xyz_t'],
+                         alpha_t=processed_info['alpha_t'],
+                         msa_prev=None,
+                         pair_prev=None,
+                         state_prev=None,
+                         t=torch.tensor(t),
+                         motif_mask=motif_mask)
+
+    def loss_fn_self_conditioning(self, batch):
+        seq_init = batch['input_seq_onehot'].float()
+        motif_mask = batch['motif_mask'].bool()
+        # train with self-conditioning, t+1 ranges from 1 to T
+        t_plus_1 = batch['t'].squeeze()
+        # modify: t+1 ranges from 2 to T, index from 1 to T-1
+        t_plus_1 = torch.where(t_plus_1 == 1, 2, t_plus_1) - 1
+        x_t_plus_1 = torch.stack([batch['fa_stack'][idx, t_idx] for idx, t_idx in enumerate(t_plus_1)])
+        # t ranges from 1 to T-1, index from 0 to T-2
+        t = t_plus_1 - 1
+        x_t = torch.stack([batch['fa_stack'][idx, t_idx] for idx, t_idx in enumerate(t)])
+
+        # get_x_prev
+        plus_processed_info = self._preprocess(seq_init, x_t_plus_1, t_plus_1, motif_mask)
+        with torch.no_grad():
+            msa_prev, pair_prev, px0, state_prev, alpha_prev \
+                = self.model(plus_processed_info['msa_masked'],
+                             plus_processed_info['msa_full'],
+                             plus_processed_info['seq_in'],
+                             plus_processed_info['xt_in'],
+                             plus_processed_info['idx_pdb'],
+                             t1d=plus_processed_info['t1d'],
+                             t2d=plus_processed_info['t2d'],
+                             xyz_t=plus_processed_info['xyz_t'],
+                             alpha_t=plus_processed_info['alpha_t'],
+                             msa_prev=None,
+                             pair_prev=None,
+                             state_prev=None,
+                             t=torch.tensor(t_plus_1),
+                             return_raw=True,
+                             motif_mask=motif_mask)
+
+
+
+        processed_info = self._preprocess(seq_init, x_t, t, motif_mask)
+        B, N, L = processed_info['xyz_t'].shape[:3]
+        zeros = torch.zeros(B, N, L, 24, 3).float().to(processed_info['xyz_t'].device)
+        processed_info['xyz_t'] = torch.cat((px0.unsqueeze(1), zeros), dim=-2)  # [B,T,L,27,3]
+        t2d_44 = xyz_to_t2d(processed_info['xyz_t'])  # [B,T,L,L,44]
+        # No effect if t2d is only dim 44
+        processed_info['t2d'][...,:44] = t2d_44
+
+        logits, logits_aa, logits_exp, xyz, alpha_s, lddt \
+            = self.model(processed_info['msa_masked'],
+                         processed_info['msa_full'],
+                         processed_info['seq_in'],
+                         processed_info['xt_in'],
+                         processed_info['idx_pdb'],
+                         t1d=processed_info['t1d'],
+                         t2d=processed_info['t2d'],
+                         xyz_t=processed_info['xyz_t'],
+                         alpha_t=processed_info['alpha_t'],
+                         msa_prev=None,
+                         pair_prev=None,
+                         state_prev=None,
+                         t=torch.tensor(t),
+                         motif_mask=motif_mask)
 
 
     def training_step(self, batch, batch_idx, **kwargs):
-
-        seq_init = batch['input_seq_onehot'].float()
-        motif_mask = batch['motif_mask'].bool()
         if self.exp_conf.self_conditioning_percent < random.random():
-            # plain mode, t ranges from 1 to T, index from 0 to T-1
-            t = batch['t'].squeeze() - 1
-            x_t = torch.stack([batch['fa_stack'][idx, t] for idx, t in enumerate(t)])
-
-            msa_masked, msa_full, seq_in, xt_in, idx_pdb, t1d, t2d, xyz_t, alpha_t = self._preprocess(
-                seq_init, x_t, t, motif_mask)
-            msa_prev, pair_prev, px0, state_prev, alpha, logits, plddt = self.model(msa_masked,
-                                msa_full,
-                                seq_in,
-                                xt_in,
-                                idx_pdb,
-                                t1d=t1d,
-                                t2d=t2d,
-                                xyz_t=xyz_t,
-                                alpha_t=alpha_t,
-                                msa_prev = None,
-                                pair_prev = None,
-                                state_prev = None,
-                                t=torch.tensor(t),
-                                return_infer=True,
-                                motif_mask=motif_mask)
-            pass
+            self.loss_fn_normal(batch)
         else:
-            # train with self-conditioning, t+1 ranges from 1 to T, index from 0 to T-1
-            t_plus_1 = batch['t'].squeeze() - 1
-            x_t_plus_1 = torch.stack([batch['fa_stack'][idx, t] for idx, t in enumerate(t_plus_1)])
+            self.loss_fn_self_conditioning(batch)
 
-
-            msa_masked, msa_full, seq_in, xt_in, idx_pdb, t1d, t2d, xyz_t, alpha_t = self._preprocess(
-                seq_init, x_t_plus_1, t_plus_1, motif_mask)
 
 
 

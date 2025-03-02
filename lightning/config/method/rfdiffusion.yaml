@@ -14,7 +14,7 @@ dataset:
     # contiguous_percent: 0.5
     max_motif_n_seg: 4
     sampler:
-      max_batch_size: 2
+      max_batch_size: 16
       max_num_res_squared: 500_000
 
 
@@ -170,7 +170,7 @@ experiment:
   ckpt_freq: 10
   lr_scheduler: step
   monitor: train_loss
-  precision: bf16
+  precision: bf16-mixed
 
   optimizer:
     lr: 0.0005
@@ -180,7 +180,7 @@ experiment:
     prefetch_factor: 10
 
   train_sample_mode: cluster_length_batch
-  self_conditioning_percent: 0.5
+  self_conditioning_percent: 1.
 
   # Experiment metadata
   seed: 111
