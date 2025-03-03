@@ -13,6 +13,7 @@ import logging
 from lightning.sampler.rfdiffusion import model_runners
 import glob
 
+
 ###########################################################
 #### Functions which can be called outside of Denoiser ####
 ###########################################################
@@ -54,8 +55,8 @@ def get_next_frames(xt, px0, t, diffuser, so3_type, diffusion_mask, noise_scale=
     R_t, Ca_t = rigid_from_3_points(N_t, Ca_t, C_t)
 
     # this must be to normalize them or something
-    R_0 = scipy_R.from_matrix(R_0.squeeze().numpy()).as_matrix()
-    R_t = scipy_R.from_matrix(R_t.squeeze().numpy()).as_matrix()
+    R_0 = scipy_R.from_matrix(R_0.float().squeeze().numpy()).as_matrix()
+    R_t = scipy_R.from_matrix(R_t.float().squeeze().numpy()).as_matrix()
 
     L = R_t.shape[0]
     all_rot_transitions = np.broadcast_to(np.identity(3), (L, 3, 3)).copy()
@@ -79,12 +80,12 @@ def get_next_frames(xt, px0, t, diffuser, so3_type, diffusion_mask, noise_scale=
 
     # Apply the interpolated rotation matrices to the coordinates
     next_crds = (
-        np.einsum(
-            "lrij,laj->lrai",
-            all_rot_transitions,
-            xt[:, :3, :] - Ca_t.squeeze()[:, None, ...].numpy(),
-        )
-        + Ca_t.squeeze()[:, None, None, ...].numpy()
+            np.einsum(
+                "lrij,laj->lrai",
+                all_rot_transitions,
+                xt[:, :3, :] - Ca_t.squeeze()[:, None, ...].numpy(),
+            )
+            + Ca_t.squeeze()[:, None, None, ...].numpy()
     )
 
     # (L,3,3) set of backbone coordinates with slight rotation
@@ -99,23 +100,23 @@ def get_mu_xt_x0(xt, px0, t, beta_schedule, alphabar_schedule, eps=1e-6):
     # sigma is predefined from beta. Often referred to as beta tilde t
     t_idx = t - 1
     sigma = (
-        (1 - alphabar_schedule[t_idx - 1]) / (1 - alphabar_schedule[t_idx])
-    ) * beta_schedule[t_idx]
+                    (1 - alphabar_schedule[t_idx - 1]) / (1 - alphabar_schedule[t_idx])
+            ) * beta_schedule[t_idx]
 
     xt_ca = xt[:, 1, :]
     px0_ca = px0[:, 1, :]
 
     a = (
-        (torch.sqrt(alphabar_schedule[t_idx - 1] + eps) * beta_schedule[t_idx])
-        / (1 - alphabar_schedule[t_idx])
-    ) * px0_ca
+                (torch.sqrt(alphabar_schedule[t_idx - 1] + eps) * beta_schedule[t_idx])
+                / (1 - alphabar_schedule[t_idx])
+        ) * px0_ca
     b = (
-        (
-            torch.sqrt(1 - beta_schedule[t_idx] + eps)
-            * (1 - alphabar_schedule[t_idx - 1])
-        )
-        / (1 - alphabar_schedule[t_idx])
-    ) * xt_ca
+                (
+                        torch.sqrt(1 - beta_schedule[t_idx] + eps)
+                        * (1 - alphabar_schedule[t_idx - 1])
+                )
+                / (1 - alphabar_schedule[t_idx])
+        ) * xt_ca
 
     mu = a + b
 
@@ -123,14 +124,14 @@ def get_mu_xt_x0(xt, px0, t, beta_schedule, alphabar_schedule, eps=1e-6):
 
 
 def get_next_ca(
-    xt,
-    px0,
-    t,
-    diffusion_mask,
-    crd_scale,
-    beta_schedule,
-    alphabar_schedule,
-    noise_scale=1.0,
+        xt,
+        px0,
+        t,
+        diffusion_mask,
+        crd_scale,
+        beta_schedule,
+        alphabar_schedule,
+        noise_scale=1.0,
 ):
     """
     Given full atom x0 prediction (xyz coordinates), diffuse to x(t-1)
@@ -202,7 +203,7 @@ def get_noise_schedule(T, noiseT, noise1, schedule_type):
     }
 
     assert (
-        schedule_type in noise_schedules
+            schedule_type in noise_schedules
     ), f"noise_schedule must be one of {noise_schedules.keys()}. Received noise_schedule={schedule_type}. Exiting."
 
     return noise_schedules[schedule_type]
@@ -219,30 +220,30 @@ class Denoise:
     """
 
     def __init__(
-        self,
-        T,
-        L,
-        diffuser,
-        b_0=0.001,
-        b_T=0.1,
-        min_b=1.0,
-        max_b=12.5,
-        min_sigma=0.05,
-        max_sigma=1.5,
-        noise_level=0.5,
-        schedule_type="linear",
-        so3_schedule_type="linear",
-        cache_dir=None,
-        so3_type="igso3",
-        noise_scale_ca=1.0,
-        final_noise_scale_ca=1,
-        ca_noise_schedule_type="constant",
-        noise_scale_frame=0.5,
-        final_noise_scale_frame=0.5,
-        frame_noise_schedule_type="constant",
-        crd_scale=1 / 15,
-        potential_manager=None,
-        partial_T=None,
+            self,
+            T,
+            L,
+            diffuser,
+            b_0=0.001,
+            b_T=0.1,
+            min_b=1.0,
+            max_b=12.5,
+            min_sigma=0.05,
+            max_sigma=1.5,
+            noise_level=0.5,
+            schedule_type="linear",
+            so3_schedule_type="linear",
+            cache_dir=None,
+            so3_type="igso3",
+            noise_scale_ca=1.0,
+            final_noise_scale_ca=1,
+            ca_noise_schedule_type="constant",
+            noise_scale_frame=0.5,
+            final_noise_scale_frame=0.5,
+            frame_noise_schedule_type="constant",
+            crd_scale=1 / 15,
+            potential_manager=None,
+            partial_T=None,
     ):
         """
 
@@ -304,14 +305,14 @@ class Denoise:
             return np.sqrt(np.sum((V - W) * (V - W), axis=(-2, -1)) / N + eps)
 
         assert (
-            xT.shape[1] == px0.shape[1]
+                xT.shape[1] == px0.shape[1]
         ), f"xT has shape {xT.shape} and px0 has shape {px0.shape}"
 
         L, n_atom, _ = xT.shape  # A is number of atoms
         atom_mask = ~torch.isnan(px0)
         # convert to numpy arrays
-        px0 = px0.cpu().detach().numpy()
-        xT = xT.cpu().detach().numpy()
+        px0 = px0.cpu().detach().float().numpy()
+        xT = xT.cpu().detach().float().numpy()
         diffusion_mask = diffusion_mask.cpu().detach().numpy()
 
         # 1 centre motifs at origin and get rotation matrix
@@ -404,14 +405,14 @@ class Denoise:
         return Ca_grads
 
     def get_next_pose(
-        self,
-        xt,
-        px0,
-        t,
-        diffusion_mask,
-        fix_motif=True,
-        align_motif=True,
-        include_motif_sidechains=True,
+            self,
+            xt,
+            px0,
+            t,
+            diffusion_mask,
+            fix_motif=True,
+            align_motif=True,
+            include_motif_sidechains=True,
     ):
         """
         Wrapper function to take px0, xt and t, and to produce xt-1
@@ -484,12 +485,12 @@ class Denoise:
 
         # Apply gradient step from guiding potentials
         # This can be moved to below where the full atom representation is calculated to allow for potentials involving sidechains
+        if self.potential_manager is not None:
+            grad_ca = self.get_potential_gradients(
+                xt.clone(), diffusion_mask=diffusion_mask
+            )
 
-        grad_ca = self.get_potential_gradients(
-            xt.clone(), diffusion_mask=diffusion_mask
-        )
-
-        ca_deltas += self.potential_manager.get_guide_scale(t) * grad_ca
+            ca_deltas += self.potential_manager.get_guide_scale(t) * grad_ca
 
         # add the delta to the new frames
         frames_next = torch.from_numpy(frames_next) + ca_deltas[:, None, :]  # translate
@@ -522,14 +523,14 @@ def sampler_selector(conf: DictConfig):
 
 def parse_pdb(filename, **kwargs):
     """extract xyz coords for all heavy atoms"""
-    with open(filename,"r") as f:
-        lines=f.readlines()
+    with open(filename, "r") as f:
+        lines = f.readlines()
     return parse_pdb_lines(lines, **kwargs)
 
 
 def parse_pdb_lines(lines, parse_hetatom=False, ignore_het_h=True):
     # indices of residues observed in the structure
-    res, pdb_idx = [],[]
+    res, pdb_idx = [], []
     for l in lines:
         if l[:4] == "ATOM" and l[12:16].strip() == "CA":
             res.append((l[22:26], l[17:20]))
@@ -555,15 +556,15 @@ def parse_pdb_lines(lines, parse_hetatom=False, ignore_het_h=True):
             " " + l[12:16].strip().ljust(3),
             l[17:20],
         )
-        if (chain,resNo) in pdb_idx:
+        if (chain, resNo) in pdb_idx:
             idx = pdb_idx.index((chain, resNo))
             # for i_atm, tgtatm in enumerate(util.aa2long[util.aa2num[aa]]):
             for i_atm, tgtatm in enumerate(
-                util.aa2long[util.aa2num[aa]][:14]
-                ):
+                    util.aa2long[util.aa2num[aa]][:14]
+            ):
                 if (
-                    tgtatm is not None and tgtatm.strip() == atom.strip()
-                    ):  # ignore whitespace
+                        tgtatm is not None and tgtatm.strip() == atom.strip()
+                ):  # ignore whitespace
                     xyz[idx, i_atm, :] = [float(l[30:38]), float(l[38:46]), float(l[46:54])]
                     break
 
@@ -695,8 +696,8 @@ class BlockAdjacency:
              conf.scaffold_list as conf
              conf.inference.num_designs for sanity checking
         """
-       
-        self.conf=conf 
+
+        self.conf = conf
         # either list or path to .txt file with list of scaffolds
         if self.conf.scaffoldguided.scaffold_list is not None:
             if type(self.conf.scaffoldguided.scaffold_list) == list:
@@ -881,13 +882,13 @@ class BlockAdjacency:
         """
         Wrapper method for pulling an item from the list, and preparing ss and block adj features
         """
-        
+
         # Handle determinism. Useful for integration tests
         if self.conf.inference.deterministic:
             torch.manual_seed(self.num_completed)
             np.random.seed(self.num_completed)
             random.seed(self.num_completed)
-  
+
         if self.systematic:
             # reset if num designs > num_scaffolds
             if self.item_n >= len(self.scaffold_list):
@@ -960,8 +961,8 @@ class Target:
                         [
                             (crop[0], p)
                             for p in np.arange(
-                                int(crop.split("-")[0][1:]), int(crop.split("-")[1]) + 1
-                            )
+                            int(crop.split("-")[0][1:]), int(crop.split("-")[1]) + 1
+                        )
                         ]
                     )
             contig_list.append(subcon)

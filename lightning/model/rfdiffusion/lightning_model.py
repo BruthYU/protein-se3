@@ -35,10 +35,14 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         self.model_conf = conf.model
         self.data_conf = conf.dataset
         self.diffuser_conf = conf.diffuser
+        self.denoiser_conf = conf.denoiser
         self.infer_conf = conf.inference
+        self.preprocess_conf = conf.preprocess
 
 
         self.model = self.initialize_model()
+        self.allatom = ComputeAllAtomCoords()
+        self.diffuser = Diffuser(**self.diffuser_conf)
 
 
 
@@ -56,7 +60,7 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
 
         # Load checkpoint, so that we can assemble the config
         self.load_checkpoint()
-        self.assemble_config_from_chk()
+        # self.assemble_config_from_chk()
         # Now actually load the model weights into RF
         return self.load_model()
 
@@ -66,6 +70,16 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         # print('This is inf_conf.ckpt_path')
         # print(self.ckpt_path)
         self.ckpt = torch.load(self.ckpt_path)
+
+    def construct_denoiser(self, L):
+        """Make length-specific denoiser."""
+        denoise_kwargs = OmegaConf.to_container(self.diffuser_conf)
+        denoise_kwargs.update(OmegaConf.to_container(self.denoiser_conf))
+        denoise_kwargs.update({
+            'L': L,
+            'diffuser': self.diffuser,
+        })
+        return iu.Denoise(**denoise_kwargs)
 
 
 
@@ -254,6 +268,17 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         # return msa_masked, msa_full, seq, torch.squeeze(xyz_t, dim=1), idx, t1d, t2d, xyz_t, alpha_t
         return processed_info
 
+    def get_next_batch_poses(self, denoiser, x_t_plus_1, px0, t_plus_1, motif_mask):
+        x_t_list = []
+        for X, P, T, M in zip(x_t_plus_1, px0, t_plus_1, motif_mask):
+            x_t, px0 = denoiser.get_next_pose(xt=X.cpu(), px0=P, t=int(T.cpu()), diffusion_mask=M.cpu(),
+                include_motif_sidechains=self.preprocess_conf.motif_sidechain_input)
+            x_t_list.append(x_t)
+        return torch.stack(x_t_list)
+
+
+
+
 
     def loss_fn_normal(self, batch):
         seq_init = batch['input_seq_onehot'].float()
@@ -285,6 +310,9 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
                          motif_mask=motif_mask)
 
     def loss_fn_self_conditioning(self, batch):
+
+
+
         seq_init = batch['input_seq_onehot'].float()
         motif_mask = batch['motif_mask'].bool()
         # train with self-conditioning, t+1 ranges from 1 to T
@@ -298,6 +326,7 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
 
         # get_px0_prev
         plus_processed_info = self._preprocess(seq_init, x_t_plus_1, t_plus_1, motif_mask)
+        B, N, L = plus_processed_info['xyz_t'].shape[:3]
         with torch.no_grad():
             msa_prev, pair_prev, px0, state_prev, alpha_prev \
                 = self.model(plus_processed_info['msa_masked'],
@@ -319,26 +348,24 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         prev_pred = torch.clone(px0)
 
         # get x_t from denoiser
+        denoiser = self.construct_denoiser(L)
         _, px0 = self.allatom(torch.argmax(plus_processed_info['seq_in'], dim=-1), px0, alpha_prev)
-        px0 = px0.squeeze()[:, :14]
-        # Generate Next Input
-        x_t, px0 = self.denoiser.get_next_pose(
-            xt=x_t_plus_1,
-            px0=px0,
-            t=t_plus_1,
-            diffusion_mask=self.mask_str.squeeze(),
-            align_motif=self.inf_conf.align_motif,
-            include_motif_sidechains=self.preprocess_conf.motif_sidechain_input
-        )
+        x_t = self.get_next_batch_poses(denoiser, x_t_plus_1, px0, t_plus_1, motif_mask).to(self.device)
+        zeros = torch.zeros(B, L, 13, 3).float().to(self.device)
+        x_t = torch.cat((x_t, zeros), dim=-2)
+
+
 
         # Forward Pass
         processed_info = self._preprocess(seq_init, x_t, t, motif_mask)
         B, N, L = processed_info['xyz_t'].shape[:3]
-        zeros = torch.zeros(B, N, L, 24, 3).float().to(processed_info['xyz_t'].device)
-        processed_info['xyz_t'] = torch.cat((prev_pred.unsqueeze(1), zeros), dim=-2)  # [B,T,L,27,3]
-        t2d_44 = xyz_to_t2d(processed_info['xyz_t'])  # [B,T,L,L,44]
+        zeros = torch.zeros(B, N, L, 24, 3).float().to(self.device)
+        prev_xyz_t = torch.cat((prev_pred.unsqueeze(1), zeros), dim=-2)  # [B,T,L,27,3]
+        t2d_44 = xyz_to_t2d(prev_xyz_t)  # [B,T,L,L,44]
         # No effect if t2d is only dim 44
-        processed_info['t2d'][...,:44] = t2d_44
+        prev_t2d = processed_info['t2d']
+        prev_t2d[...,:44] = t2d_44
+
 
         logits, logits_aa, logits_exp, xyz, alpha_s, lddt \
             = self.model(processed_info['msa_masked'],
@@ -347,14 +374,15 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
                          processed_info['xt_in'],
                          processed_info['idx_pdb'],
                          t1d=processed_info['t1d'],
-                         t2d=processed_info['t2d'],
-                         xyz_t=processed_info['xyz_t'],
+                         t2d=prev_t2d,
+                         xyz_t=prev_xyz_t,
                          alpha_t=processed_info['alpha_t'],
                          msa_prev=None,
                          pair_prev=None,
                          state_prev=None,
                          t=torch.tensor(t),
                          motif_mask=motif_mask)
+        pass
 
 
     def training_step(self, batch, batch_idx, **kwargs):

@@ -159,7 +159,8 @@ class rfdiffusion_Dataset(data.Dataset):
         t = self.diffuser_conf.T
         if self.is_training:
             t = self._rng.integers(low=1, high=self.diffuser_conf.T + 1)
-        return torch.ones(1, dtype=torch.long) * t
+        # return torch.ones(1, dtype=torch.long) * t
+        return t
 
     def setup_inpainting(self, feats, rng):
         scaffold_mask = self._new_sample_scaffold_mask(feats, rng)
