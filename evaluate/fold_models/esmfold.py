@@ -2,7 +2,7 @@ import esm
 import torch
 import numpy as np
 
-from fold_models.model import FoldModel
+from evaluate.fold_models.model import FoldModel
 
 
 class ESMFold(FoldModel):

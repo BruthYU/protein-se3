@@ -23,6 +23,7 @@ opt_einsum==3.4.0
 e3nn==0.3.3
 pynvml==11.0.0
 decorator==5.1.0
+fair-esm==2.0.0
 
 # installation of following packages requires environment information
 # pip install torch-scatter -f https://data.pyg.org/whl/torch-2.1.0+cu118.html

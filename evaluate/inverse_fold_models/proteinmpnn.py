@@ -5,8 +5,7 @@ import numpy as np
 
 from evaluate.inverse_fold_models.model import InverseFoldModel
 
-import sys
-sys.path.append('packages')
+
 
 from evaluate.ProteinMPNN.protein_mpnn_utils import (
 	_scores,
@@ -63,7 +62,7 @@ class ProteinMPNN(InverseFoldModel):
 		chain_list = list(set(designed_chain_list + fixed_chain_list))
 
 		#@markdown ### Design Options
-		num_seqs = 8 #@param ["1", "2", "4", "8", "16", "32", "64"] {type:"raw"}
+		num_seqs = self.num_samples #@param ["1", "2", "4", "8", "16", "32", "64"] {type:"raw"}
 		num_seq_per_target = num_seqs
 
 		#@markdown - Sampling temperature for amino acids, T=0.0 means taking argmax, T>>1.0 means sample randomly.

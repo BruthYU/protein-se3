@@ -22,7 +22,7 @@ import tree
 from preprocess.tools import utils as du
 from evaluate.openfold.utils import rigid_utils
 from evaluate.openfold.data import data_transforms
-
+import warnings
 
 _BYTES_PER_PROTEIN = int(2*1e6)
 
@@ -34,7 +34,14 @@ def get_list_chunk_slices(lst, chunk_size):
 def get_csv_rows_many(csv, shared_list, idx_slice):
     start_idx, end_idx = tuple(map(lambda x: min(x, len(csv)), idx_slice))
     for idx in tqdm(list(range(start_idx, end_idx))):
-        shared_list[idx] = pickle.dumps(get_csv_row(csv, idx))
+        row_tuple = get_csv_row(csv, idx)
+        while len(row_tuple[0]['aatype']) != int(row_tuple[-1]['modeled_seq_len']):
+            l1 = len(row_tuple[0]['aatype'])
+            l2 = int(row_tuple[-1]['modeled_seq_len'])
+            warnings.warn(f'Lengths ({l1} | {l2}) mismatch: Protein {row_tuple[-2]} has been ignored')
+            resample_idx = random.choice(range(start_idx, end_idx))
+            row_tuple = get_csv_row(csv, resample_idx)
+        shared_list[idx] = pickle.dumps(row_tuple)
 
     print("Finished saving data to pickle")
 

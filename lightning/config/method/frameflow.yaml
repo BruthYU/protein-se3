@@ -8,14 +8,14 @@ dataset:
   seed: 123
 
   sampler:
-    max_batch_size: 256 # effective batch_size: 128 * num_replica
+    max_batch_size: 256
     max_num_res_squared: 500_000
 
   add_plddt_mask: False
   inpainting_percent: 1.0
 
   samples_per_eval_length: 4
-  num_eval_lengths: 10
+  num_eval_lengths: 4
   max_eval_length: 256
 
   # Scaffolding parameters
@@ -71,7 +71,7 @@ experiment:
   use_wandb: False
   ckpt_freq: 10
   lr_scheduler: null
-  monitor: train_loss
+  monitor: train/loss
   precision: 32
 
   # Evaluation.
@@ -85,7 +85,7 @@ experiment:
   warm_start: null
   warm_start_cfg_override: True
   loader:
-    num_workers: 4
+    num_workers: 0
     prefetch_factor: 10
   training:
     mask_plddt: True

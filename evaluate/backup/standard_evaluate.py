@@ -1,7 +1,6 @@
 import argparse
-
 from pipeline import Pipeline
-from evaluate.inverse_fold_models.proteinmpnn import ProteinMPNN
+from inverse_fold_models.proteinmpnn import ProteinMPNN
 from fold_models.esmfold import ESMFold
 
 def main(args):
