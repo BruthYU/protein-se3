@@ -71,7 +71,7 @@ experiment:
   use_wandb: False
   ckpt_freq: 10
   lr_scheduler: null
-  monitor: train/loss
+  monitor: train_loss
   precision: 32
 
   # Evaluation.

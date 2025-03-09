@@ -84,7 +84,7 @@ class frameflow_Lightning_Model(pl.LightningModule):
     def on_train_epoch_end(self):
         epoch_time = (time.time() - self._epoch_start_time) / 60.0
         self.log(
-            'train/epoch_time_minutes',
+            'train_epoch_time_minutes',
             epoch_time,
             on_step=False,
             on_epoch=True,
@@ -303,17 +303,17 @@ class frameflow_Lightning_Model(pl.LightningModule):
         }
         for k, v in total_losses.items():
             self._log_scalar(
-                f"train/{k}", v, prog_bar=False, batch_size=num_batch)
+                f"train_{k}", v, prog_bar=False, batch_size=num_batch)
 
         # Losses to track. Stratified across t.
         so3_t = torch.squeeze(noisy_batch['so3_t'])
         self._log_scalar(
-            "train/so3_t",
+            "train_so3_t",
             np.mean(du.to_numpy(so3_t)),
             prog_bar=False, batch_size=num_batch)
         r3_t = torch.squeeze(noisy_batch['r3_t'])
         self._log_scalar(
-            "train/r3_t",
+            "train_r3_t",
             np.mean(du.to_numpy(r3_t)),
             prog_bar=False, batch_size=num_batch)
         for loss_name, loss_dict in batch_losses.items():
@@ -325,28 +325,28 @@ class frameflow_Lightning_Model(pl.LightningModule):
                 batch_t, loss_dict, loss_name=loss_name)
             for k, v in stratified_losses.items():
                 self._log_scalar(
-                    f"train/{k}", v, prog_bar=False, batch_size=num_batch)
+                    f"train_{k}", v, prog_bar=False, batch_size=num_batch)
 
         # Training throughput
         scaffold_percent = torch.mean(batch['diffuse_mask'].float()).item()
         self._log_scalar(
-            "train/scaffolding_percent",
+            "train_scaffolding_percent",
             scaffold_percent, prog_bar=False, batch_size=num_batch)
         motif_mask = 1 - batch['diffuse_mask'].float()
         num_motif_res = torch.sum(motif_mask, dim=-1)
         self._log_scalar(
-            "train/motif_size",
+            "train_motif_size",
             torch.mean(num_motif_res).item(), prog_bar=False, batch_size=num_batch)
         self._log_scalar(
-            "train/length", batch['res_mask'].shape[1], prog_bar=False, batch_size=num_batch)
+            "train_length", batch['res_mask'].shape[1], prog_bar=False, batch_size=num_batch)
         self._log_scalar(
-            "train/batch_size", num_batch, prog_bar=False)
+            "train_batch_size", num_batch, prog_bar=False)
         step_time = time.time() - step_start_time
         self._log_scalar(
-            "train/examples_per_second", num_batch / step_time)
+            "train_examples_per_second", num_batch / step_time)
         train_loss = total_losses['se3_vf_loss']
         self._log_scalar(
-            "train/loss", train_loss, batch_size=num_batch)
+            "train_loss", train_loss, batch_size=num_batch)
         return train_loss
 
     def configure_optimizers(self):

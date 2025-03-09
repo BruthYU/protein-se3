@@ -180,7 +180,7 @@ def main(args):
     jsonl_path = args.jsonl_path
     with open(jsonl_path) as f:
         lines = f.readlines()
-    # lines = lines[:1200]
+    lines = lines[:1200]
     total_num_paths = len(lines)
 
     write_dir = args.write_dir
