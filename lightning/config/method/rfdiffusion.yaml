@@ -199,3 +199,12 @@ experiment:
   prefetch_factor: 100
   use_gpu: False
 
+  # hyperparameters
+  d_clamp: 10
+  block_gamma: 0.99
+  w_rot: 1.0
+  w_2D: 1.0
+  w_trans: 0.5
+
+
+

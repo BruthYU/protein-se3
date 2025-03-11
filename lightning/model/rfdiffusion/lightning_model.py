@@ -13,12 +13,15 @@ import lightning.data.rfdiffusion.denoiser as iu
 from lightning.model.rfdiffusion.potentials.manager import PotentialManager
 import logging
 import random
-import torch.nn.functional as nn
+import torch.nn.functional as F
+import torch.nn as nn
 from lightning.model.rfdiffusion import util
 from hydra.core.hydra_config import HydraConfig
 import os
 import pytorch_lightning as pl
 import time
+import math
+from lightning.model.rfdiffusion.util import rigid_from_3_points
 HYDRA_DIR=hydra.utils.get_original_cwd()
 
 TOR_INDICES  = util.torsion_indices
@@ -276,6 +279,41 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
             x_t_list.append(x_t)
         return torch.stack(x_t_list)
 
+    def rigid_from_xyz(self, xyz):
+        '''
+         xyz: [B,L,3,3] or [B,L,14,3]
+        '''
+        xyz = xyz
+        N = xyz[:, :, 0, :]
+        Ca = xyz[:, :, 1, :]  # [1, num_res, 3, 3]
+        C = xyz[:, :, 2, :]
+        # scipy rotation object for true coordinates
+        R_true, Ca = rigid_from_3_points(N, Ca, C)
+        R_true = R_true[0]
+        Ca = Ca[0]
+        return R_true, Ca
+
+    def d_frame(self, xyz, xyz_0):
+        B = xyz.shape[0]
+        R_xyz, R_Ca = self.rigid_from_xyz(xyz)
+        R_xyz_0, R_Ca_0 = self.rigid_from_xyz(xyz_0)
+        Ca_distance = nn.MSELoss(R_Ca, R_Ca_0)
+
+        batch_identity = torch.eye(3)[None,:].repeat(B,1,1)
+        R_distance = torch.linalg.matrix_norm(
+            batch_identity - torch.bmm(R_xyz.transpose(1,2),R_xyz_0))**2
+
+        return torch.sqrt(Ca_distance + R_distance)
+
+    def loss_frame(self, xyz, xyz_0):
+        block_num = xyz.shape[0]
+        gamma = self.exp_conf.block_gamma
+        gamma_list = [math.pow(gamma, i) for i in range(block_num)]
+        gamma_factor = np.sum(gamma_list)
+        frame_loss = 0
+        for i in range(block_num):
+            frame_loss += gamma_list[block_num - i - 1] * self.d_frame(xyz[i], xyz_0)
+        return frame_loss / gamma_factor
 
 
 

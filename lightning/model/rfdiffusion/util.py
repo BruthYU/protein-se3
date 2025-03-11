@@ -95,7 +95,7 @@ def rigid_from_3_points(N, Ca, C, non_ideal=False, eps=1e-8):
 
 def rigid_from_xyz(xyz):
     '''
-    xyz: (num_res,27,3,3)
+    xyz: (num_res, 27, 3)
     '''
     xyz = xyz
     N = xyz[None, :, 0, :]

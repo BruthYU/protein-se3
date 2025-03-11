@@ -104,10 +104,11 @@ class NewBatchSampler:
                 self.max_batch_size,
                 self._data_conf.sampler.max_num_res_squared // seq_len ** 2 + 1,
             )
-            batch_df = len_df.iloc[:max_batch_size]
+            batch_df = len_df[:max_batch_size]
             batch_indices = batch_df['index'].tolist()
             batch_repeats = math.floor(max_batch_size / len(batch_indices))
             sample_order.append(batch_indices * batch_repeats)
+
 
         # Remove any length bias (shuffle batch lists).
         new_order = torch.randperm(len(sample_order), generator=rng).numpy().tolist()
@@ -177,6 +178,11 @@ class NewBatchSampler:
             all_batches.extend(random.sample(all_batches, padding_size))
         all_batches = all_batches[:self._num_batches]
         self.sample_order = all_batches
+        for idx, order in enumerate(self.sample_order):
+            print('-------------')
+            print(f'Batch Idx: {idx}')
+            print(order)
+        assert len(self.sample_order)==self._num_batches, "_num_batches error"
         # print(f"----Sample Order: {self.sample_order}---")
 
     def __iter__(self):
