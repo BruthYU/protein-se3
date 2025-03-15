@@ -26,6 +26,7 @@ sys.path.append('..')
 print(sys.path)
 LOG = logging.getLogger(__name__)
 os.environ['TORCH_USE_CUDA_DSA'] = "1"
+torch.set_float32_matmul_precision('medium')
 
 
 

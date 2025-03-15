@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
 from lightning.model.rfdiffusion.RoseTTAFoldModel import RoseTTAFoldModule
-from lightning.model.rfdiffusion.kinematics import get_init_xyz, xyz_to_t2d
+from lightning.model.rfdiffusion.kinematics import *
 from lightning.data.rfdiffusion.diffusion import Diffuser
 from preprocess.tools.chemical import seq2chars
 from lightning.model.rfdiffusion.util_module import ComputeAllAtomCoords
@@ -285,27 +285,41 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         '''
         xyz = xyz
         N = xyz[:, :, 0, :]
-        Ca = xyz[:, :, 1, :]  # [1, num_res, 3, 3]
+        Ca = xyz[:, :, 1, :]
         C = xyz[:, :, 2, :]
         # scipy rotation object for true coordinates
         R_true, Ca = rigid_from_3_points(N, Ca, C)
-        R_true = R_true[0]
-        Ca = Ca[0]
         return R_true, Ca
 
     def d_frame(self, xyz, xyz_0):
-        B = xyz.shape[0]
+        B, L, N = xyz.shape[:3]
+        d_clamp = self.exp_conf.d_clamp
+        w_rot = self.exp_conf.w_rot
+        w_trans = self.exp_conf.w_trans
+
         R_xyz, R_Ca = self.rigid_from_xyz(xyz)
         R_xyz_0, R_Ca_0 = self.rigid_from_xyz(xyz_0)
-        Ca_distance = nn.MSELoss(R_Ca, R_Ca_0)
 
-        batch_identity = torch.eye(3)[None,:].repeat(B,1,1)
-        R_distance = torch.linalg.matrix_norm(
-            batch_identity - torch.bmm(R_xyz.transpose(1,2),R_xyz_0))**2
+        # R_Ca [B*L,3] R_xyz[B*L,3,3]
+        R_Ca, R_Ca_0 = R_Ca.view(B*L,-1), R_Ca_0.view(B*L,-1)
+        R_xyz, R_xyz_0 = R_xyz.view(B*L,N,-1), R_xyz_0.view(B*L,N,-1)
 
-        return torch.sqrt(Ca_distance + R_distance)
+        # Ca_Distance.shape [B*L]
+        Ca_Distance_Norm = torch.norm(R_Ca - R_Ca_0, dim=-1, p=2)
+        Ca_Distance = torch.where(Ca_Distance_Norm > d_clamp, d_clamp, Ca_Distance_Norm)
 
-    def loss_frame(self, xyz, xyz_0):
+        # R_Distance.shape [B*L]
+        batch_identity = torch.eye(3)[None,:].repeat(B*L,1,1).to(self.device)
+        # I - r^(0).T r(0)
+        R_Diff = batch_identity - torch.bmm(R_xyz.transpose(1,2),R_xyz_0) # (B*L,3,3)
+        R_Distance_Norm = torch.linalg.matrix_norm(R_Diff)
+        R_Distance = R_Distance_Norm**2
+
+        frame_distance = torch.sqrt(w_trans*Ca_Distance + w_rot*R_Distance).mean()
+
+        return frame_distance
+
+    def metric_frame(self, xyz, xyz_0):
         block_num = xyz.shape[0]
         gamma = self.exp_conf.block_gamma
         gamma_list = [math.pow(gamma, i) for i in range(block_num)]
@@ -314,6 +328,19 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
         for i in range(block_num):
             frame_loss += gamma_list[block_num - i - 1] * self.d_frame(xyz[i], xyz_0)
         return frame_loss / gamma_factor
+
+    def metric_c6d(self, c6d_pred_logits, xyz_0):
+        c6d_0, c6d_0_mask = xyz_to_c6d(xyz_0)
+        bins_0 = c6d_to_bins(c6d_0)
+        c6d_loss = 0
+        for i in range(len(c6d_pred_logits)):
+            logits = c6d_pred_logits[i]  # [B,37,L,L] or [B,19,L,L]
+            target = bins_0[:, :, :, i]  # [B,L,L]
+            criterion = torch.nn.CrossEntropyLoss()
+            c6d_loss += criterion(logits, target.long())
+        return c6d_loss
+
+
 
 
 
@@ -346,6 +373,16 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
                          state_prev=None,
                          t=torch.tensor(t),
                          motif_mask=motif_mask)
+
+        loss_frame = self.metric_frame(xyz, batch['xyz'])
+        loss_c6d = self.metric_c6d(logits, batch['xyz'])
+        final_loss = loss_frame + self.exp_conf.w_2D * loss_c6d
+
+        loss_dict = {'metric_frame': loss_frame,
+                     'metric_c6d': loss_c6d,
+                     'final_loss': final_loss}
+
+        return loss_dict
 
     def loss_fn_self_conditioning(self, batch):
 
@@ -420,14 +457,29 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
                          state_prev=None,
                          t=torch.tensor(t),
                          motif_mask=motif_mask)
-        pass
+
+        loss_frame = self.metric_frame(xyz, batch['xyz'])
+        loss_c6d = self.metric_c6d(logits, batch['xyz'])
+        final_loss = loss_frame + self.exp_conf.w_2D * loss_c6d
+
+        loss_dict = {'metric_frame': loss_frame,
+                     'metric_c6d': loss_c6d,
+                     'final_loss': final_loss}
+
+        return loss_dict
 
 
     def training_step(self, batch, batch_idx, **kwargs):
         if self.exp_conf.self_conditioning_percent < random.random():
-            self.loss_fn_normal(batch)
+             step_loss_dict =  self.loss_fn_normal(batch)
         else:
-            self.loss_fn_self_conditioning(batch)
+             step_loss_dict = self.loss_fn_self_conditioning(batch)
+
+        self.log("train_loss", step_loss_dict['final_loss'], on_step=True, on_epoch=True, prog_bar=True)
+        self.log("metric_frame", step_loss_dict['metric_frame'], on_step=True, on_epoch=True, prog_bar=True)
+        self.log("metric_c6d", step_loss_dict['metric_c6d'], on_step=True, on_epoch=True, prog_bar=True)
+
+        return step_loss_dict['final_loss']
 
 
 
@@ -435,7 +487,6 @@ class rfdiffusion_Lightning_Model(pl.LightningModule):
 
 
 
-        pass
 
 
 

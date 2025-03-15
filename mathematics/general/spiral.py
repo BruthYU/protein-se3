@@ -33,5 +33,6 @@ np.save('spiral.npy', points)
 
 ax = plt.axes(projection="3d")
 ax.scatter3D(points[:,0], points[:,1], points[:,2], s=0.5,c=points[:,2],cmap='viridis')
-
+plt.tight_layout()
+plt.savefig('spiral.png', dpi=300)
 plt.show()

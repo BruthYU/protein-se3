@@ -1,0 +1,16 @@
+# Important: Install foldseek
+# wget https://mmseqs.com/foldseek/foldseek-linux-avx2.tar.gz; tar xvzf foldseek-linux-avx2.tar.gz; export PATH=$(pwd)/foldseek/bin/:$PATH
+# or modify ~/.bashrc with "export PATH="$HOME/{your_path_to_foldseek}/bin:$PATH""
+
+torch==2.1.0
+fair-esm==2.0.0
+ml-collections==0.1.1
+tqdm
+numpy==1.22.4
+pandas
+OmegaConf
+biopython
+dm-tree
+scipy
+einops
+

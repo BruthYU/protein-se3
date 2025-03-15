@@ -11,6 +11,7 @@ from evaluate.pipeline.utils.process import run_parallel
 import sys
 sys.path.append('../..')
 
+
 class DiversityPipeline():
 	"""
 	Diversity evaluation pipeline. 
@@ -24,10 +25,10 @@ class DiversityPipeline():
 	"""
 
 	def __init__(
-		self,
-		postfix='',
-		max_ctm_threshold=0.6,
-		tm_align_exec='../../TMscore/TMalign'
+			self,
+			postfix='',
+			max_ctm_threshold=0.6,
+			tm_align_exec='../../TMscore/TMalign'
 	):
 		"""
 		Args:
@@ -81,13 +82,13 @@ class DiversityPipeline():
 
 		# Check for existing clustering information
 		df = pd.read_csv(info_filepath)
-		assert f'single_cluster_idx{self.postfix}' not in df.columns, 'Single cluster information existed'
-		assert f'complete_cluster_idx{self.postfix}' not in df.columns, 'Complete cluster information existed'
-		assert f'average_cluster_idx{self.postfix}' not in df.columns, 'Average cluster information existed'
+		# assert f'single_cluster_idx{self.postfix}' not in df.columns, 'Single cluster information existed'
+		# assert f'complete_cluster_idx{self.postfix}' not in df.columns, 'Complete cluster information existed'
+		# assert f'average_cluster_idx{self.postfix}' not in df.columns, 'Average cluster information existed'
 
 		# Process
 		scores_dir = self._compute_scores(designs_dir, rootdir, num_processes)
-		self._compute_clusters(scores_dir, rootdir)
+		self._compute_info(scores_dir, rootdir)
 
 		# Clean
 		for tempdir in self.tempdirs:
@@ -99,8 +100,8 @@ class DiversityPipeline():
 
 		Args:
 			designs_dir:
-				A directory of designed structure, where each file is the 
-				most similar structure (predicted by the folding model) to 
+				A directory of designed structure, where each file is the
+				most similar structure (predicted by the folding model) to
 				the generated structure and is stored in a PDB format.
 			output_dir:
 				Base output directory.
@@ -109,9 +110,9 @@ class DiversityPipeline():
 
 		Returns:
 			scores_dir:
-				Output directory (specified as [output_dir]/scores), where each 
-				file stores the processed output from each process/CPU and each 
-				line in the file stores the TM score between a pair of designed 
+				Output directory (specified as [output_dir]/scores), where each
+				file stores the processed output from each process/CPU and each
+				line in the file stores the TM score between a pair of designed
 				structures (in the format of 'name1,name2,tmscore').
 		"""
 
@@ -154,9 +155,11 @@ class DiversityPipeline():
 
 				# Compare pdb files
 				output_filepath = os.path.join(params['output_dir'], f'output_{i}.txt')
-				subprocess.call(f'{self.tm_align_exec} {design_filepath_1} {design_filepath_2} -fast > {output_filepath}', shell=True)
-				
-				# Parse TMalign output 
+				subprocess.call(
+					f'{self.tm_align_exec} {design_filepath_1} {design_filepath_2} -fast > {output_filepath}',
+					shell=True)
+
+				# Parse TMalign output
 				rows = []
 				with open(output_filepath) as file:
 					for line in file:
@@ -191,18 +194,30 @@ class DiversityPipeline():
 
 		return scores_dir
 
-	def _compute_clusters(self, scores_dir, output_dir):
+	def TMscores_Info(self, dists):
+		L = dists.shape[0]
+		TMscore_list = []
+		for i in range(L):
+			for j in range(i + 1, L):
+				print(f"Pair [{dists[i][j]},{dists[j][i]}]")
+				TMscore_list.append((dists[i][j] + dists[j][i]) / 2)
+		TMscore_array = np.array(TMscore_list)
+		info = [{'protein_num': L, 'mean_pairwise_tm': np.mean(TMscore_array),
+				 'std_deviation_pairwise_tm': np.std(TMscore_array)}]
+		return info
+
+	def _compute_info(self, scores_dir, output_dir):
 		"""
-		Perform hierarchical clustering on the set of designed structures, 
-		based on precomputed pairwise TM scores. Outputs are stored in 
+		Perform hierarchical clustering on the set of designed structures,
+		based on precomputed pairwise TM scores. Outputs are stored in
 		the file named 'info.csv' under the root directory, by concatenating
 		clustering statistics into the original file.
 
 		Args:
 			scores_dir:
-				A directory where each file stores the processed output from 
-				each process/CPU and each line in the file stores the TM score 
-				between a pair of designed structures (in the format of 
+				A directory where each file stores the processed output from
+				each process/CPU and each line in the file stores the TM score
+				between a pair of designed structures (in the format of
 				'name1,name2,tmscore').
 			output_dir:
 				Base output directory.
@@ -214,14 +229,14 @@ class DiversityPipeline():
 		assert os.path.exists(info_filepath), 'Missing input info filepath'
 		clusters_filepath = os.path.join(output_dir, f'single_clusters.csv')
 		assert not os.path.exists(clusters_filepath), 'Output clusters filepath existed'
-		with open(clusters_filepath, 'w') as file:
-			columns = [
-				'domain',
-				f'single_cluster_idx{self.postfix}',
-				f'complete_cluster_idx{self.postfix}',
-				f'average_cluster_idx{self.postfix}'
-			]
-			file.write(','.join(columns) + '\n')
+		# with open(clusters_filepath, 'w') as file:
+		# 	columns = [
+		# 		'domain',
+		# 		f'single_cluster_idx{self.postfix}',
+		# 		f'complete_cluster_idx{self.postfix}',
+		# 		f'average_cluster_idx{self.postfix}'
+		# 	]
+		# 	file.write(','.join(columns) + '\n')
 
 		# Create index map
 		domains, domain_idx_map = [], {}
@@ -244,35 +259,44 @@ class DiversityPipeline():
 			domain_idx_2 = domain_idx_map[row['domain_2']]
 			dists[domain_idx_1][domain_idx_2] = row['tm']
 
-		# Compute clusters
-		columns = []
-		linkages = ['single', 'complete', 'average']
-		for linkage in linkages:
+		print('Pair-wise TM Score:')
+		print(dists)
+		info = self.TMscores_Info(dists)
+		for key in info[0].keys():
+			print(f'{key}: {info[0][key]}')
+		pd.DataFrame(info).to_csv(os.path.join(output_dir, 'tm_info.csv'))
 
-			# Perform hierarchical clustering
-			clusters = hcluster(dists, linkage, max_ctm_threshold=self.max_ctm_threshold)
+# Compute clusters
+# columns = []
+# avg_linkage_ctm_dict = {}
+# linkages = ['single', 'complete', 'average']
+# for linkage in linkages:
+#
+# 	# Perform hierarchical clustering
+# 	clusters = hcluster(dists, linkage, max_ctm_threshold=self.max_ctm_threshold)
+#
+# 	# Map domain to cluster idx
+# 	domain_cluster_idx_map = {}
+# 	for cluster_idx, cluster in enumerate(clusters):
+# 		for domain_idx in cluster:
+# 			domain = domains[domain_idx]
+# 			domain_cluster_idx_map[domain] = cluster_idx
+#
+# 	# Create column
+# 	columns.append([domain_cluster_idx_map[domain] for domain in domains])
+#
+#
+# # Save cluster information
+# with open(clusters_filepath, 'a') as file:
+# 	for i, domain in enumerate(domains):
+# 		file.write('{},{},{},{}\n'.format(domain, columns[0][i], columns[1][i], columns[2][i]))
+#
+# # Merge
+# df_clusters = pd.read_csv(clusters_filepath)
+# df = df.merge(df_clusters, on='domain')
+#
+# # Save
+# df.to_csv(info_filepath, index=False)
 
-			# Map domain to cluster idx
-			domain_cluster_idx_map = {}
-			for cluster_idx, cluster in enumerate(clusters):
-				for domain_idx in cluster:
-					domain = domains[domain_idx]
-					domain_cluster_idx_map[domain] = cluster_idx
-
-			# Create column
-			columns.append([domain_cluster_idx_map[domain] for domain in domains])
-
-		# Save cluster information
-		with open(clusters_filepath, 'a') as file:
-			for i, domain in enumerate(domains):
-				file.write('{},{},{},{}\n'.format(domain, columns[0][i], columns[1][i], columns[2][i]))
-
-		# Merge
-		df_clusters = pd.read_csv(clusters_filepath)
-		df = df.merge(df_clusters, on='domain')
-
-		# Save
-		df.to_csv(info_filepath, index=False)
-
-		# Clean
-		os.remove(clusters_filepath)
+# Clean
+# os.remove(clusters_filepath)
