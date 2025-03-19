@@ -1,7 +1,7 @@
 <div align="center">
 
 
-## Protein-SE(3): Benchmarking SE(3)-based Generative Models for Protein Structure Design
+## Benchmarking SE(3)-based Generative Models for Protein Backbone Design
 ### Multi-GPU Training supported by Pytorch Lightning⚡
 
 
