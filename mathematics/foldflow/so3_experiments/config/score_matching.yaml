@@ -1,0 +1,10 @@
+# SO(3) diffuser arguments
+so3:
+  num_omega: 1000
+  num_sigma: 1000
+  min_sigma: 0.1
+  min_t: 0.01
+  max_sigma: 1.5
+  schedule: logarithmic
+  cache_dir: ./.cache
+  use_cached_score: False
