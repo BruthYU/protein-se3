@@ -1,5 +1,5 @@
 # Preprocess
-Lit-ProteinDGM pre-processes different protein files (`mmcif, pdb and jsonl`) into a unified `lmdb` cache format, which could be loaded for all integrated methods during training.
+protein-se3 pre-processes different protein files (`mmcif, pdb and jsonl`) into a unified `lmdb` cache format, which could be loaded for all integrated methods during training.
 
 ### Directories Overview
 Raw data, intermediate data (metadata.csv and pickle files), unified lmdb-based cache files are organized in the following way.

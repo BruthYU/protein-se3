@@ -151,7 +151,7 @@ inference:
   # For example: lightning/hydra_inference/2024-10-21_12-12-09/framediff_outputs
   output_dir: ./framediff_outputs/
 
-  # ${hydra:runtime.cwd} = Lit-ProteinDGM/lightning
+  # ${hydra:runtime.cwd} = protein-se3/lightning
   # Directory of software, weights, and outputs.
   pt_hub_dir: ${hydra:runtime.cwd}/resource/torch/
   # Path to model weights.

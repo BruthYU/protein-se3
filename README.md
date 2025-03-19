@@ -1,7 +1,7 @@
 <div align="center">
 
 
-## Deep Generative Models for Protein Backbone Generation 
+## Protein-SE(3): Benchmarking SE(3)-based Generative Models for Protein Structure Design
 ### Multi-GPU Training supported by Pytorch Lightning⚡
 
 
@@ -9,7 +9,7 @@
 ![Static Badge](https://img.shields.io/badge/Pytorch-Lightning-yellow)
 ![Static Badge](https://img.shields.io/badge/Config-Hydra-blue)
 ![Static Badge](https://img.shields.io/badge/PRs-Welcom-green)
-![Star](https://img.shields.io/github/stars/BruthYU/Lit-ProteinDGM?style=social&label=Star)
+![Star](https://img.shields.io/github/stars/BruthYU/protein-se3?style=social&label=Star)
 
 </div>
 
@@ -29,16 +29,16 @@
 To get started, simply create conda environment and run pip installation:
 
 ```shell
-conda create -n Lit-ProteinDGM python=3.9
-git clone https://github.com/BruthYU/Lit-ProteinDGM
+conda create -n protein-se3 python=3.9
+git clone https://github.com/BruthYU/protein-se3
 ...
-cd Lit-ProteinDGM
+cd protein-se3
 pip install -r requirements.txt
 ```
 Specially, you also need to install [NVIDIA's implementation of SE(3)-Transformers](https://developer.nvidia.com/blog/accelerating-se3-transformers-training-using-an-nvidia-open-source-model-implementation/) 
 to use **RFdiffusion**. Run script below to install the NVIDIA SE(3)-Transformer:
 ```shell
-cd Lit-ProteinDGM/lightning/model/rfdiffusion/SE3Transformer
+cd protein-se3/lightning/model/rfdiffusion/SE3Transformer
 python setup.py install
 ```
 

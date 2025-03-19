@@ -1,11 +1,11 @@
 # Lightning Workspace
-Main workspace of Lit-ProteinDGM, which contains the Lightning⚡ implementations of collective
+Main workspace of protein-se3, which contains the Lightning⚡ implementations of collective
 **Protein Structure Generative Models**. 
 
 ## Folders and Files
 <details>
 
-1. **config**: Lit-ProteinDGM manages complex configuration with the [hydra](https://github.com/facebookresearch/hydra) framework. 
+1. **config**: protein-se3 manages complex configuration with the [hydra](https://github.com/facebookresearch/hydra) framework. 
 This folder contains default settings of integrated methods. Specifically, `train.yaml` and `inference.yaml` select method for training or inference
 by setting the value `default`, corresponding configurations are loaded from the folder `config/method`. For example, if we want to run training of **FoldFlow**, we can set the `train.yaml` as
     ```yaml
@@ -73,7 +73,7 @@ are required (`{}_Sampler`).
 ### Prepare Datasets
 Following this [README.md](../preprocess/README.md) to preprocess and prepare datasets. 
 ### Training
-- **Step 1: Configure Generative Model.** Lit-ProteinDGM currently supports *FrameDiff*, *FoldFLow*, *Genie2*,
+- **Step 1: Configure Generative Model.** protein-se3 currently supports *FrameDiff*, *FoldFLow*, *Genie2*,
 *FrameFlow* and *RFDiffusion*. You can choose any protein generative method (e.g. *Genie2*) by setting `config/train.yaml` as:
    ```yaml
    defaults:
