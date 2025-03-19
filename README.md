@@ -1,8 +1,8 @@
 <div align="center">
 
 
-## Benchmarking SE(3)-based Generative Models for Protein Backbone Design
-### Multi-GPU Training supported by Pytorch Lightning⚡
+### Benchmarking SE(3)-based Generative Models for Protein Structure Design
+#### Multi-GPU Training supported by Pytorch Lightning⚡
 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-red.svg)](https://opensource.org/licenses/MIT)
