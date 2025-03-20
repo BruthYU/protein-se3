@@ -44,7 +44,7 @@ def get_split(data, split, seed):
         elif split == "valid":
             data = data[indices[int(n * 0.8) : int(n * 0.9)]]
         elif split == "test":
-            data = data[indices[int(n * 0.9) :]]
+            data = data[indices[int(n * 0.9):]]
     return data
 
 
