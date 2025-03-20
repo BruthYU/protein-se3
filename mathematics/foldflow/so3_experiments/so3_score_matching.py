@@ -49,17 +49,17 @@ Load Dataset
 dataset_name = "bunny_group.npy"
 trainset = SpecialOrthogonalGroup(split="train", dataset_name=dataset_name)
 trainloader = DataLoader(
-    trainset, batch_size=1024, shuffle=True, num_workers=0, collate_fn=lambda x: concat_np_features(x, add_batch_dim=True)
+    trainset, batch_size=16, shuffle=True, num_workers=0, collate_fn=lambda x: concat_np_features(x, add_batch_dim=True)
 )
 
 valset = SpecialOrthogonalGroup(split="valid",dataset_name=dataset_name)
 valloader = DataLoader(
-    valset, batch_size=256, shuffle=False, num_workers=0, collate_fn=lambda x: concat_np_features(x, add_batch_dim=True)
+    valset, batch_size=8, shuffle=False, num_workers=0, collate_fn=lambda x: concat_np_features(x, add_batch_dim=True)
 )
 
 testset = SpecialOrthogonalGroup(split="test", dataset_name=dataset_name)
 testloader = DataLoader(
-    testset, batch_size=256, shuffle=False, num_workers=0, collate_fn=lambda x: concat_np_features(x, add_batch_dim=True)
+    testset, batch_size=8, shuffle=False, num_workers=0, collate_fn=lambda x: concat_np_features(x, add_batch_dim=True)
 )
 
 '''
@@ -83,37 +83,36 @@ def diff_rot(data, state=0):
     rng = np.random.default_rng(state)
     t_list = [rng.uniform(so3_conf.so3.min_t, 1.0) for _ in range(len(data))]
     for rot_0, t in zip(data, t_list):
+        rot_0 = Rotation.from_matrix(rot_0).as_rotvec()
         rot_t, rot_score = so3_diffuser.forward_marginal(
-            rot_0, t)
+            rot_0[None], t)
         rot_score_scaling = so3_diffuser.score_scaling(t)
         rot_t_list.append(rot_t)
         rot_score_list.append(rot_score)
         rot_score_scaling_list.append(rot_score_scaling)
     diff_rot_feats['t'] = np.stack(t_list)
-    diff_rot_feats['rot_t'] = np.stack(rot_t_list)
-    diff_rot_feats['rot_score'] = np.stack(rot_score_list)
+    diff_rot_feats['rot_t'] = np.concatenate(rot_t_list)
+    diff_rot_feats['rot_score'] = np.concatenate(rot_score_list)
     diff_rot_feats['rot_score_scaling'] = np.stack(rot_score_scaling_list)
     final_feats = tree.map_structure(
         lambda x: x if torch.is_tensor(x) else torch.tensor(x), diff_rot_feats)
     return final_feats
 
 
-def matrix_shape_and_numpy(x):
-    x = rearrange(x, 'b (c d) -> b c d', c=3, d=3)
-    return x.cpu().numpy()
+
 
 '''
 SDE Inference
 '''
 def inference(model, rot_t, t, dt, noise_scale=1.0):
     with torch.no_grad():
-        rot_t = rearrange(rot_t, 'b c d -> b (c d)', c=3, d=3)
+
         input = torch.cat([rot_t, t[:,None]],dim=-1)
         rot_score = model(input)
 
+        rot_t = rot_t.cpu().numpy()
+        rot_score = rot_score.cpu().numpy()
 
-        rot_t = matrix_shape_and_numpy(rot_t)
-        rot_score = matrix_shape_and_numpy(rot_score)
         rot_t_1 = so3_diffuser.reverse(
             rot_t=rot_t,
             score_t=rot_score,
@@ -134,25 +133,26 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
 
 
     global_step = 0
-    for epoch in range(num_epochs):
+    for epoch in tqdm(range(num_epochs)):
 
-        if display:
-            progress_bar = tqdm(total=len(trainloader))
-            progress_bar.set_description(f"Epoch {epoch}")
 
-        if (epoch % 10) == 0:
+        if (epoch % 100) == 0:
             n_test = testset.data.shape[0]
-            traj = torch.tensor(Rotation.random(n_test).as_matrix()).to(device)
-            for t in torch.linspace(0, 1, 200):
+            traj = torch.tensor(Rotation.random(n_test).as_rotvec()).to(device)
+            for t in torch.linspace(so3_conf.so3.min_t, 1, 100):
                 t = torch.tensor([t]).to(device).repeat(n_test).requires_grad_(True)
                 dt = torch.tensor([1 / 200]).to(device)
                 traj = inference(model, traj, t, dt)
             final_traj = traj
+            final_traj = Rotation.from_rotvec(final_traj.cpu().numpy()).as_matrix()
 
-            w_d1 = wasserstein(torch.tensor(testset.data).to(device).double().detach(), final_traj.detach(), power=1)
-            w_d2 = wasserstein(torch.tensor(testset.data).to(device).double().detach(), final_traj.detach(), power=2)
+            w_d1 = wasserstein(torch.tensor(testset.data).to(device).double().detach(),
+                               torch.tensor(final_traj).to(device).double().detach(), power=1)
+            w_d2 = wasserstein(torch.tensor(testset.data).to(device).double().detach(),
+                               torch.tensor(final_traj).to(device).double().detach(), power=2)
             w1ds.append(w_d1)
             w2ds.append(w_d2)
+
 
             if display:
                 plot_so3(final_traj)
@@ -165,26 +165,27 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
             diff_rot_feats = diff_rot(data)
             for key in diff_rot_feats.keys():
                 diff_rot_feats[key] = diff_rot_feats[key].to(device)
-            rot_t = rearrange(diff_rot_feats['rot_t'],'b c d -> b (c d)', c=3, d=3)
+            rot_t = diff_rot_feats['rot_t']
             input = torch.cat([rot_t, diff_rot_feats['t'][:,None]],dim=-1)
             pred_rot_score = model(input)
-            pred_rot_score = rearrange(pred_rot_score, 'b (c d) -> b c d', c=3, d=3)
 
+            loss = torch.nn.MSELoss()
             rot_mse = (diff_rot_feats['rot_score']- pred_rot_score) ** 2
             rot_loss = torch.sum(
-                rot_mse / diff_rot_feats['rot_score_scaling'][:, None, None] ** 2,
-                dim=(-1, -2)
-            )
-            losses.append(rot_loss.detach().cpu().numpy())
+                rot_mse / diff_rot_feats['rot_score_scaling'][:, None] ** 2)
             rot_loss.backward()
+
             optimizer.step()
-            if display:
-                progress_bar.update(1)
-                logs = {"loss": rot_loss.detach().item(), "step": global_step}
-                progress_bar.set_postfix(**logs)
-                global_step += 1
+            losses.append(rot_loss.detach().cpu().numpy())
+
 
             optimizer.zero_grad()
+    return model, np.array(losses), np.array(w1ds), np.array(w2ds)
+
+
+
+
+
 
 
 '''
@@ -196,10 +197,10 @@ losses_runs = []
 num_runs = 5
 for i in range(num_runs):
     print('doing run ', i)
-    dim = 9  # network ouput is 9 dimensional (3x3 matrix)
+    dim = 3  # network ouput is 3 dimensional (rot_vec matrix)
     model = MLP(dim=dim, time_varying=True).to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
-    model, losses, w1ds, w2ds = main_loop(model, optimizer, num_epochs=80, display=False)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5, foreach=False)
+    model, losses, w1ds, w2ds = main_loop(model, optimizer, num_epochs=1000, display=True)
 
     w1ds_runs.append(w1ds)
     w2ds_runs.append(w2ds)

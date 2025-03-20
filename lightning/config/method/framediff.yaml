@@ -8,7 +8,7 @@ dataset:
   #  num_eval_lengths: 10
   num_t: 100
   split_ratio: 0.1
-  num_eval_lengths: 10
+  num_eval_lengths: 1
   samples_per_eval_length: 4
 
 
@@ -86,7 +86,7 @@ experiment:
 
   # Training arguments
   log_freq: 1000
-  batch_size: 256
+  batch_size: 8
   steps_per_epoch: null
   num_loader_workers: 5
   precision: 32

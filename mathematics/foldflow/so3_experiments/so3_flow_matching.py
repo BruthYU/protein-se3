@@ -104,11 +104,9 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
     w2ds = []
     global_step = 0
 
-    for epoch in range(num_epochs):
+    for epoch in tqdm(range(num_epochs)):
 
-        if display:
-            progress_bar = tqdm(total=len(trainloader))
-            progress_bar.set_description(f"Epoch {epoch}")
+
 
         if (epoch % 10) == 0:
             n_test = testset.data.shape[0]
@@ -133,8 +131,9 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
         for _, batch in enumerate(trainloader):
             data = batch['rotationMatrix']
             optimizer.zero_grad()
-            x1 = data.to(device)
-            x0 = torch.tensor(Rotation.random(x1.size(0)).as_matrix()).to(device)
+            x1 = data
+            x0 = torch.tensor(Rotation.random(x1.shape[0]).as_matrix())
+            x1 = torch.from_numpy(x1).type_as(x0)
 
             t, xt, ut = FM.sample_location_and_conditional_flow_simple(x0.double(), x1.double())
 
@@ -147,11 +146,7 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
             loss.backward()
             optimizer.step()
 
-            if display:
-                progress_bar.update(1)
-                logs = {"loss": loss.detach().item(), "step": global_step}
-                progress_bar.set_postfix(**logs)
-                global_step += 1
+
 
     return model, np.array(losses), np.array(w1ds), np.array(w2ds)
 
@@ -172,7 +167,7 @@ for i in range(num_runs):
     print('doing run ', i)
     model = PMLP(dim=dim, time_varying=True).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
-    model, losses, w1ds, w2ds = main_loop(model, optimizer, num_epochs=80, display=False)
+    model, losses, w1ds, w2ds = main_loop(model, optimizer, num_epochs=80, display=True)
 
     w1ds_runs.append(w1ds)
     w2ds_runs.append(w2ds)

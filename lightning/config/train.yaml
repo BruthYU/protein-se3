@@ -1,6 +1,5 @@
 defaults:
-  - method: rfdiffusion
-
+  - method: framediff
 
 hydra:
   run:
