@@ -31,7 +31,7 @@ class SO3ConditionalFlowMatcher:
         xt = self.vec_manifold.exp_not_from_identity(t.reshape(-1, 1) * log_x1, rot_x0)
         xt = self.vec_manifold.matrix_from_rotation_vector(xt)
         torch.set_default_dtype(torch.float32)
-        xt = torch.from_numpy(xt)
+        xt = xt if torch.is_tensor(xt) else torch.from_numpy(xt)
         return xt
 
     def compute_conditional_flow_simple(self, t, xt):
@@ -48,7 +48,7 @@ class SO3ConditionalFlowMatcher:
         return rearrange(xt_dot, "(c d) b -> b c d", c=3, d=3)
 
     def sample_location_and_conditional_flow_simple(self, x0, x1):
-        t = torch.rand(x0.shape[0]).type_as(x0).to(x0.device)
+        t = torch.rand(x0.shape[0]).float()
         t.requires_grad = True
         xt = self.sample_xt(x0, x1, t)
         ut = self.compute_conditional_flow_simple(t, xt)

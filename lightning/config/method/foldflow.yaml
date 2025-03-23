@@ -14,7 +14,7 @@ dataset:
     min_beta_percent: -1.0
     rog_quantile: 0.96
   min_t: 0.01
-  num_eval_lengths: 10
+  num_eval_lengths: 1
   samples_per_eval_length: 4
 
   num_t: 100
@@ -102,7 +102,7 @@ experiment:
 
   # Training arguments
   log_freq: 100
-  batch_size: 256
+  batch_size: 16
   eval_batch_size: ${dataset.samples_per_eval_length}
   num_loader_workers: 12
   torch_num_threads: 8

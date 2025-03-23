@@ -49,17 +49,17 @@ Load Dataset
 dataset_name = "bunny_group.npy"
 trainset = SpecialOrthogonalGroup(split="train", dataset_name=dataset_name)
 trainloader = DataLoader(
-    trainset, batch_size=16, shuffle=True, num_workers=0, collate_fn=lambda x: concat_np_features(x, add_batch_dim=True)
+    trainset, batch_size=256, shuffle=True, num_workers=0, collate_fn=lambda x: concat_np_features(x, add_batch_dim=True)
 )
 
 valset = SpecialOrthogonalGroup(split="valid",dataset_name=dataset_name)
 valloader = DataLoader(
-    valset, batch_size=8, shuffle=False, num_workers=0, collate_fn=lambda x: concat_np_features(x, add_batch_dim=True)
+    valset, batch_size=128, shuffle=False, num_workers=0, collate_fn=lambda x: concat_np_features(x, add_batch_dim=True)
 )
 
 testset = SpecialOrthogonalGroup(split="test", dataset_name=dataset_name)
 testloader = DataLoader(
-    testset, batch_size=8, shuffle=False, num_workers=0, collate_fn=lambda x: concat_np_features(x, add_batch_dim=True)
+    testset, batch_size=128, shuffle=False, num_workers=0, collate_fn=lambda x: concat_np_features(x, add_batch_dim=True)
 )
 
 '''
@@ -199,7 +199,7 @@ for i in range(num_runs):
     print('doing run ', i)
     dim = 3  # network ouput is 3 dimensional (rot_vec matrix)
     model = MLP(dim=dim, time_varying=True).to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5, foreach=False)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5, foreach=False)
     model, losses, w1ds, w2ds = main_loop(model, optimizer, num_epochs=1000, display=True)
 
     w1ds_runs.append(w1ds)
