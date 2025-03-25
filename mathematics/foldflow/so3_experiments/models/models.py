@@ -2,8 +2,11 @@
 import torch
 from lightning.data.foldflow.so3_helpers import tangent_space_proj
 from einops import rearrange
+from preprocess.tools import utils as du
 
-torch.set_default_dtype(torch.float64)
+from lightning.data.framediff.so3_diffuser import igso3_expansion, score
+
+# torch.set_default_dtype(torch.float64)
 
 
 # class PMLP(torch.nn.Module):
@@ -32,7 +35,7 @@ torch.set_default_dtype(torch.float64)
 
 
 class MLP(torch.nn.Module):
-    def __init__(self, dim, out_dim=None, w=1024, time_varying=False):
+    def __init__(self, dim, diffuser,  out_dim=None, w=128, time_varying=False):
         super().__init__()
         self.time_varying = time_varying
         if out_dim is None:
@@ -49,8 +52,12 @@ class MLP(torch.nn.Module):
             torch.nn.Linear(w, out_dim),
         )
 
-    def forward(self, x):
-        return self.net(x)
+    def forward(self, input):
+        x = self.net(input)
+        return x
+
+
+
 
 
 class GradModel(torch.nn.Module):

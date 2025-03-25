@@ -13,12 +13,13 @@ from scipy.spatial.transform import Rotation
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 from utils.plotting import plot_so3
 from utils.optimal_transport import so3_wasserstein as wasserstein
-from lightning.data.foldflow.so3_helpers import norm_SO3, expmap
+from lightning.data.foldflow.so3_helpers import norm_SO3, expmap, rotmat_to_rotvec
 from lightning.data.foldflow.so3_condflowmatcher import SO3ConditionalFlowMatcher
 from mathematics.foldflow.so3_experiments.models.models import PMLP
 from torch.utils.data import DataLoader
 from data.datasets import SpecialOrthogonalGroup
 from geomstats._backend import _backend_config as _config
+
 _config.DEFAULT_DTYPE = torch.cuda.FloatTensor
 savedir = "models/so3_synthetic"
 os.makedirs(savedir, exist_ok=True)
@@ -37,17 +38,14 @@ fig = plot_so3(data, adjust=True)
 plt.savefig('figs/so3_synthetic_data.png', dpi=300)
 plt.show()
 
-trainset = SpecialOrthogonalGroup(name="bunny_group.npy", split="train")
+trainset = SpecialOrthogonalGroup(name=dataset_name, split="train")
 trainloader = DataLoader(
     trainset, batch_size=64, shuffle=True, num_workers=0
 )
-valset = SpecialOrthogonalGroup(split="valid")
-valloader = DataLoader(
-    valset, batch_size=256, shuffle=False, num_workers=0
-)
-testset = SpecialOrthogonalGroup(split="test")
+
+testset = SpecialOrthogonalGroup(name=dataset_name, split="test")
 testloader = DataLoader(
-    testset, batch_size=256, shuffle=False, num_workers=0
+    testset, batch_size=64, shuffle=False, num_workers=0
 )
 
 
@@ -105,6 +103,11 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
                 dt = torch.tensor([1 / 200]).to(device)
                 traj = inference(model, traj, t, dt)
             final_traj = rearrange(traj, 'b (c d) -> b c d', c=3, d=3)
+
+            # P = torch.tensor(testset.data).to(device).double().detach()
+            # P = rotmat_to_rotvec(P)
+            # Q = rotmat_to_rotvec(final_traj.detach())
+            # kl_div = torch.nn.functional.kl_div(Q.softmax(-1).log(), P.softmax(-1), reduction='sum')
 
             w_d1 = wasserstein(torch.tensor(testset.data).to(device).double().detach(), final_traj.detach(), power=1)
             w_d2 = wasserstein(torch.tensor(testset.data).to(device).double().detach(), final_traj.detach(), power=2)

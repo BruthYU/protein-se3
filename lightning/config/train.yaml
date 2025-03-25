@@ -1,9 +1,9 @@
 defaults:
-  - method: foldflow
+  - method: framediff
 
 hydra:
   run:
-    dir: ./hydra_train/${now:%Y-%m-%d_%H-%M-%S}_${method_name}
+    dir: ./hydra_train/${now:%framediffY-%m-%d_%H-%M-%S}_${method_name}
   sweep:
     dir: ./hydra_train/{now:%Y-%m-%d_%H-%M-%S}_${method_name}
     subdir: ${hydra.job.num}
