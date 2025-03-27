@@ -48,7 +48,7 @@ def get_split(data, split, seed):
 
 
 class SpecialOrthogonalGroup(Dataset):
-    def __init__(self, root="data", name="orthogonal_group.npy", split="train", seed=12345):
+    def __init__(self, root="data", name="bunny_group.npy", split="train", seed=12345):
         data = np.load(f"{root}/{name}").astype("float32")
         self.data = get_split(data, split, seed)
 
@@ -60,7 +60,7 @@ class SpecialOrthogonalGroup(Dataset):
 
 
 class SDE_Dataset(Dataset):
-    def __init__(self, root="data", name="orthogonal_group.npy", so3_diffuser = None, data_conf=None, split="train", seed=12345):
+    def __init__(self, root="data", name="bunny_group.npy", so3_diffuser = None, data_conf=None, split="train", seed=12345):
         data = np.load(f"{root}/{name}").astype("float32")
         self.so3_diffuser = so3_diffuser
         self.data = get_split(data, split, seed)
@@ -81,3 +81,15 @@ class SDE_Dataset(Dataset):
                        "rot_score": rot_score,
                        "rot_score_scaling": rot_score_scaling}
         return diff_feat_t
+
+
+class DDPM_Dataset(Dataset):
+    def __init__(self, root="data", name="bunny_group.npy", split="train", seed=12345):
+        data = np.load(f"{root}/{name}").astype("float32")
+        self.data = get_split(data, split, seed)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx]
