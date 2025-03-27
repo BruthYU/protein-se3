@@ -156,7 +156,7 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
 
 
 dim = 3  # network ouput is 3 dimensional (rot_vec matrix)
-model = MLP(dim=dim, diffuser=so3_diffuser, time_varying=True).to(device)
+model = MLP(dim=dim, time_varying=True).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
 model, losses, w1ds, w2ds = main_loop(model, optimizer, num_epochs=1000, display=True)
 

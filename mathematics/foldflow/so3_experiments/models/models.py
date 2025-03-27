@@ -35,7 +35,7 @@ from lightning.data.framediff.so3_diffuser import igso3_expansion, score
 
 
 class MLP(torch.nn.Module):
-    def __init__(self, dim, diffuser,  out_dim=None, w=128, time_varying=False):
+    def __init__(self, dim, out_dim=None, w=128, time_varying=False):
         super().__init__()
         self.time_varying = time_varying
         if out_dim is None:
@@ -55,6 +55,7 @@ class MLP(torch.nn.Module):
     def forward(self, input):
         x = self.net(input)
         return x
+
 
 
 

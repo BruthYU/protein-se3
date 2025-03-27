@@ -1,8 +1,9 @@
 import torch
 import math
 class SO3_DDPM_Scheduler:
-    def __init__(self):
+    def __init__(self, diff_conf):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.diff_conf = diff_conf
         self.setup_schedule()
 
     def setup_schedule(self):
@@ -44,6 +45,8 @@ class SO3_DDPM_Scheduler:
             that diffusion step is one-indexed and i = 0 indicates the
             un-noised stage.
         """
+        n_timestep = self.diff_conf.n_timestep
+        schedule = self.diff_conf.schedule
         if schedule == 'cosine':
             return self.cosine_beta_schedule(n_timestep)
         else:
