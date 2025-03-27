@@ -75,6 +75,7 @@ testloader = DataLoader(
 SDE Inference
 '''
 def inference(model, rot_t, t, dt, noise_scale=1.0):
+    # rot_t rotation vector
     with torch.no_grad():
         t_index = t <= so3_conf.so3.min_t
         t[t_index] = so3_conf.so3.min_t

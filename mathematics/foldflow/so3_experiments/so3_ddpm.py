@@ -9,6 +9,7 @@ from utils.so3_ddpm_scheduler import SO3_DDPM_Scheduler
 from data.datasets import DDPM_Dataset
 from torch.utils.data import DataLoader
 import tqdm
+from scipy.spatial.transform import Rotation
 
 os.environ['GEOMSTATS_BACKEND'] = 'pytorch'
 _config.DEFAULT_DTYPE = torch.cuda.FloatTensor
@@ -38,15 +39,30 @@ so3_scheduler = SO3_DDPM_Scheduler()
 Load Dataset
 '''
 dataset_name = "bunny_group.npy"
-
-
 trainset = DDPM_Dataset(split="train", name=dataset_name)
 trainloader = DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
-
-
 testset = DDPM_Dataset(split="test", name=dataset_name)
 testloader = DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
 
+'''
+loss_fn
+'''
+def loss_fn(z_pred):
+    z = torch.randn_like(z_pred)
+    loss = torch.nn.MSELoss(z_pred, z, reduction='sum')
+    return loss
+'''
+DDPM Inference
+'''
+def inference(model, rot_t, t, scheduler):
+    # rot_t rotation vector
+    with torch.no_grad():
+        input = torch.cat([rot_t, t[:,None]],dim=-1)
+        z_pred = model(input)
+        # Compute posterior
+        w_z = (1. - scheduler.alphas[t]) / scheduler.sqrt_one_minus_alphas_cumprod[t]
+        rot_t_1 = (1. / scheduler.sqrt_alphas[t]).view(-1, 1, 1) * (rot_t - w_z.view(-1, 1, 1) * z_pred)
+    return torch.tensor(rot_t_1).to(device)
 
 '''
 Main Loop
@@ -61,7 +77,7 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
     for epoch in tqdm(range(num_epochs)):
         if (epoch % 100) == 0:
             n_test = testset.data.shape[0]
-            traj = torch.tensor(so3_diffuser.sample_ref(n_test)).to(device)
+            traj = torch.tensor(Rotation.random(n_test).as_rotvec()).to(device)
 
             for t in torch.linspace(1, 0, 500):
                 t = torch.tensor([t]).to(device).repeat(n_test).requires_grad_(True)
