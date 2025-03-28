@@ -229,7 +229,7 @@ class RotationTransition(nn.Module):
         # Noise rotation
         e_scaled = random_normal_so3(t[:, None].expand(N, L), self.angular_distrib_fwd, device=self._dummy.device)    # (N, L, 3)
         e_normal = e_scaled / (c1 + 1e-8)
-        E_scaled = so3vec_to_rotation(e_scaled)   # (N, L, 3, 3)
+        E_scaled = so3vec_to_rotation(e_scaled).double()   # (N, L, 3, 3)
 
         # Scaled true rotation
         R0_scaled = so3vec_to_rotation(c0 * v_0)  # (N, L, 3, 3)

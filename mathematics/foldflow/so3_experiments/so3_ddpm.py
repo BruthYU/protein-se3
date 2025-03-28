@@ -70,7 +70,8 @@ def loss_fn(rot_pred, rot_0):
 
 # Add Noise
 def rot_diffusion(rot_0, t):
-    rot_t, _ = Rotation_DDPM.add_noise(rot_0[:, None, :], t)
+    # rot_0 [N,3]
+    rot_t, _ = Rotation_DDPM.add_noise(rot_0[:, None, :], t) # []
     return rot_t
 
 
@@ -116,11 +117,11 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
                 print('wassterstein-2 distance:', w_d2)
 
         for _, data in enumerate(trainloader):
-            rot_0 = Rotation.from_matrix(data).as_rotvec()
-            rot_0 = torch.tensor(rot_0).to(device)
+
+            rot_0 = torch.tensor(data).to(device)
             t = torch.randint(so3_conf.diffusion.n_timestep, size=(rot_0.shape[0],)).to(device) + 1
-            rot_t = rot_diffusion(rot_0, t.cpu())
-            input = torch.cat([rot_t, t[:,None]],dim=-1)
+            rot_t = rot_diffusion(rot_0.cpu(), t.cpu()).to(device)
+            input = torch.cat([rot_t.squeeze(), t[:,None]],dim=-1)
             rot_pred = model(input)
             rot_loss = loss_fn(rot_pred, rot_0)
             rot_loss.backward()
