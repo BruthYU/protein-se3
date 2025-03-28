@@ -5,10 +5,10 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 from utils.plotting import plot_so3
-from utils.so3_ddpm_scheduler import SO3_DDPM_Scheduler
+from utils.so3_ddpm import *
 from data.datasets import DDPM_Dataset
 from torch.utils.data import DataLoader
-import tqdm
+from tqdm import tqdm
 from scipy.spatial.transform import Rotation
 from omegaconf import OmegaConf
 from utils.optimal_transport import so3_wasserstein as wasserstein
@@ -31,7 +31,7 @@ plt.show()
 
 
 # SO3 DDPM Scheduler
-so3_scheduler = SO3_DDPM_Scheduler(so3_conf.diffusion)
+Rotation_DDPM = RotationTransition(num_steps=100)
 
 
 # Load Dataset
@@ -43,31 +43,46 @@ testloader = DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
 
 
 # loss_fn
-def loss_fn(z_pred):
-    # sample noise
-    z = torch.randn_like(z_pred)
-    loss = torch.nn.MSELoss(z_pred, z, reduction='sum')
+def rotation_matrix_cosine_loss(R_pred, R_true):
+    """
+    Args:
+        R_pred: (*, 3, 3).
+        R_true: (*, 3, 3).
+    Returns:
+        Per-matrix losses, (*, ).
+    """
+    size = list(R_pred.shape[:-2])
+    ncol = R_pred.numel() // 3
+
+    RT_pred = R_pred.transpose(-2, -1).reshape(ncol, 3) # (ncol, 3)
+    RT_true = R_true.transpose(-2, -1).reshape(ncol, 3) # (ncol, 3)
+
+    ones = torch.ones([ncol, ], dtype=torch.long, device=R_pred.device)
+    loss = F.cosine_embedding_loss(RT_pred, RT_true, ones, reduction='none')  # (ncol*3, )
+    loss = loss.reshape(size + [3]).sum(dim=-1)    # (*, )
     return loss
 
+def loss_fn(rot_pred, rot_0):
+    # sample noise
+    mse = torch.nn.MSELoss(reduction='sum')
+    loss = mse(rot_pred, rot_0)
+    return loss
 
 # Add Noise
-def rot_diffusion(scheduler, rot_0, t):
-    z = torch.randn_like(rot_0)
-    rot_t = scheduler.sqrt_alphas_cumprod[t].view(-1, 1, 1) * rot_0 + \
-              scheduler.sqrt_one_minus_alphas_cumprod[t].view(-1, 1, 1) * z
+def rot_diffusion(rot_0, t):
+    rot_t, _ = Rotation_DDPM.add_noise(rot_0, t)
     return rot_t
 
 
 # DDPM Inference
-def inference(model, rot_t, t, scheduler):
+def inference(model, rot_t, t):
     # rot_t rotation vector
     with torch.no_grad():
-        input = torch.cat([rot_t, t[:,None]],dim=-1)
-        z_pred = model(input)
+        input = torch.cat([rot_t, t[:, None]], dim=-1)
+        rot_eps = model(input)
         # Compute posterior
-        w_z = (1. - scheduler.alphas[t]) / scheduler.sqrt_one_minus_alphas_cumprod[t]
-        rot_t_1 = (1. / scheduler.sqrt_alphas[t]).view(-1, 1, 1) * (rot_t - w_z.view(-1, 1, 1) * z_pred)
-    return torch.tensor(rot_t_1).to(device)
+        rot_next = Rotation_DDPM.denoise(rot_t, rot_eps, t)
+    return rot_next
 
 
 # Main Loop
@@ -81,10 +96,10 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
         if (epoch % 100) == 0:
             n_test = testset.data.shape[0]
             traj = torch.tensor(Rotation.random(n_test).as_rotvec()).to(device)
-            steps = reversed(np.arange(1, so3_conf.diffsuion.n_timestep + 1))
+            steps = range(so3_conf.diffusion.n_timestep, 0, -1)
             for t in steps:
-                t = torch.tensor([t]).to(device).repeat(n_test).requires_grad_(True)
-                traj = inference(model, traj, t, so3_scheduler)
+                t = torch.tensor([t]).to(device).repeat(n_test)
+                traj = inference(model, traj, t)
             final_traj = traj
             final_traj = Rotation.from_rotvec(final_traj.cpu().numpy()).as_matrix()
             w_d1 = wasserstein(torch.tensor(testset.data).to(device).double().detach(),
@@ -100,9 +115,10 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
                 print('wassterstein-2 distance:', w_d2)
 
         for _, data in enumerate(trainloader):
-            rot_0 = torch.tensor(data).to(device)
-            t = torch.randint(so3_conf.diffusion.n_timestep, size=(rot_0.shape[0])).to(device) + 1
-            rot_t = rot_diffusion(so3_scheduler, rot_0, t)
+            rot_0 = Rotation.from_matrix(data).as_rotvec()
+            rot_0 = torch.tensor(rot_0).to(device)
+            t = torch.randint(so3_conf.diffusion.n_timestep, size=(rot_0.shape[0],)).to(device) + 1
+            rot_t = rot_diffusion(rot_0, t)
             input = torch.cat([rot_t, t[:,None]],dim=-1)
             z_pred = model(input)
             rot_loss = loss_fn(z_pred)
@@ -115,7 +131,7 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
 
 
 dim = 3  # network ouput is 3 dimensional (rot_vec matrix)
-model = MLP(dim=dim, time_varying=True).to(device)
+model = MLP(dim=dim, time_varying=True).to(device).double()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
 model, losses, w1ds, w2ds = main_loop(model, optimizer, num_epochs=1000, display=True)
 

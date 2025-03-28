@@ -79,8 +79,8 @@ def plot_se3(se3_vec, ax_lim=15, title=None, ax=None):
     ax.set_axis_off()
     # ax.view_init(azim= 30, elev= 20)
 
-    plt.savefig('a.pdf')
-    fig.show()
+    plt.savefig('a.svg', format='svg')
+
 
 def viz_frames(rigids, mask, ax=None, scale_factor=0.5, title='', ax_lim=8):
     viz_mask = mask.astype(bool)
@@ -92,7 +92,7 @@ def viz_frames(rigids, mask, ax=None, scale_factor=0.5, title='', ax_lim=8):
 if __name__ == '__main__':
     lmdb_cache = LMDB_Cache("../../preprocess/.cache/jsonl")
     csv = lmdb_cache.csv
-    sampled_orders = csv[csv['modeled_seq_len']==100]
+    sampled_orders = csv[csv['modeled_seq_len']==102]
     chain_feats, _, pdb_names, _ = lmdb_cache.get_cache_csv_row(sampled_orders.index[0])
     print(pdb_names)
     frames = chain_feats['rigids_0']
