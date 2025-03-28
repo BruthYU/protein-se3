@@ -1,18 +1,18 @@
-import torch
-from geomstats._backend import _backend_config as _config
 import os
-import math
+
 import matplotlib.pyplot as plt
-import numpy as np
-from utils.plotting import plot_so3
-from utils.so3_ddpm import *
-from data.datasets import DDPM_Dataset
+from geomstats._backend import _backend_config as _config
+from omegaconf import OmegaConf
+from scipy.spatial.transform import Rotation
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from scipy.spatial.transform import Rotation
-from omegaconf import OmegaConf
-from utils.optimal_transport import so3_wasserstein as wasserstein
+
+from data.datasets import DDPM_Dataset
 from mathematics.foldflow.so3_experiments.models.models import MLP
+from utils.ddpm_utils import *
+from utils.optimal_transport import so3_wasserstein as wasserstein
+from utils.plotting import plot_so3
+
 so3_conf = OmegaConf.load('./config/ddpm.yaml')
 os.environ['GEOMSTATS_BACKEND'] = 'pytorch'
 _config.DEFAULT_DTYPE = torch.cuda.FloatTensor
@@ -31,7 +31,7 @@ plt.show()
 
 
 # SO3 DDPM Scheduler
-Rotation_DDPM = RotationTransition(num_steps=100)
+Rotation_DDPM = RotationTransition(num_steps=so3_conf.diffusion.n_timestep)
 
 
 # Load Dataset
@@ -70,7 +70,7 @@ def loss_fn(rot_pred, rot_0):
 
 # Add Noise
 def rot_diffusion(rot_0, t):
-    rot_t, _ = Rotation_DDPM.add_noise(rot_0, t)
+    rot_t, _ = Rotation_DDPM.add_noise(rot_0[:, None, :], t)
     return rot_t
 
 
@@ -79,10 +79,11 @@ def inference(model, rot_t, t):
     # rot_t rotation vector
     with torch.no_grad():
         input = torch.cat([rot_t, t[:, None]], dim=-1)
-        rot_eps = model(input)
+        rot_next = model(input)
         # Compute posterior
-        rot_next = Rotation_DDPM.denoise(rot_t, rot_eps, t)
-    return rot_next
+
+        rot_next = Rotation_DDPM.denoise(rot_next[:, None, :], t.cpu())
+    return rot_next.squeeze().to(device)
 
 
 # Main Loop
@@ -118,10 +119,10 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
             rot_0 = Rotation.from_matrix(data).as_rotvec()
             rot_0 = torch.tensor(rot_0).to(device)
             t = torch.randint(so3_conf.diffusion.n_timestep, size=(rot_0.shape[0],)).to(device) + 1
-            rot_t = rot_diffusion(rot_0, t)
+            rot_t = rot_diffusion(rot_0, t.cpu())
             input = torch.cat([rot_t, t[:,None]],dim=-1)
-            z_pred = model(input)
-            rot_loss = loss_fn(z_pred)
+            rot_pred = model(input)
+            rot_loss = loss_fn(rot_pred, rot_0)
             rot_loss.backward()
             optimizer.step()
             losses.append(rot_loss.detach().cpu().numpy())

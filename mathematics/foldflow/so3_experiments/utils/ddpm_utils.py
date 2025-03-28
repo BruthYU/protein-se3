@@ -214,6 +214,7 @@ class RotationTransition(nn.Module):
 
         self.register_buffer('_dummy', torch.empty([0, ]))
 
+
     def add_noise(self, v_0, t):
         """
         Args:
@@ -239,27 +240,19 @@ class RotationTransition(nn.Module):
 
         return v_noisy, e_scaled
 
-    def denoise(self, v_t, v_next, t):
-        N, L = v_t.shape[:2]
+    def denoise(self, v_next, t):
+        N, L = v_next.shape[:2]
         e = random_normal_so3(t[:, None].expand(N, L), self.angular_distrib_inv, device=self._dummy.device) # (N, L, 3)
         e = torch.where(
             (t > 1)[:, None, None].expand(N, L, 3),
             e,
             torch.zeros_like(e) # Simply denoise and don't add noise at the last step
         )
-        E = so3vec_to_rotation(e)
+        E = so3vec_to_rotation(e).double()
 
-        R_next = E @ so3vec_to_rotation(v_next)
+        R_next = E @ so3vec_to_rotation(v_next.cpu())
         v_next = rotation_to_so3vec(R_next)
 
         return v_next
 
 
-if __name__ == '__main__':
-
-    RT = RotationTransition(num_steps=100)
-    a = Rotation.random(5).as_rotvec()
-    a = torch.tensor(a)[:,None,:].float()
-    t = torch.randint(100, (5,)) + 1
-    a_t, _ = RT.add_noise(a, t)
-    pass

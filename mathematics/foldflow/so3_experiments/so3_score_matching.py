@@ -106,13 +106,13 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
 
     global_step = 0
     for epoch in tqdm(range(num_epochs)):
-        if (epoch % 100) == 0:
+        if (epoch % 10) == 0:
             n_test = testset.data.shape[0]
             traj = torch.tensor(so3_diffuser.sample_ref(n_test)).to(device)
 
-            for t in torch.linspace(1, 0, 500):
+            for t in torch.linspace(1, 0, 200):
                 t = torch.tensor([t]).to(device).repeat(n_test).requires_grad_(True)
-                dt = torch.tensor([1 / 500]).to(device)
+                dt = torch.tensor([1 / 200]).to(device)
                 traj = inference(model, traj, t, dt)
             final_traj = traj
             final_traj = Rotation.from_rotvec(final_traj.cpu().numpy()).as_matrix()
@@ -136,7 +136,7 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
             for key in batch.keys():
                 batch[key] = torch.tensor(batch[key]).to(device)
             rot_t = batch['rot_t']
-            input = torch.cat([rot_t, batch['t'][:,None]],dim=-1)
+            input = torch.cat([rot_t, batch['t']],dim=-1)
             pred_rot_score = model(input)
 
 

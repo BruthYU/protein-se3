@@ -77,8 +77,8 @@ class SDE_Dataset(Dataset):
         rot_t, rot_score = self.so3_diffuser.forward_marginal(rot_0, t)
         rot_score_scaling = self.so3_diffuser.score_scaling(t)
         diff_feat_t = {"t": np.array([t]),
-                       "rot_t": rot_t,
-                       "rot_score": rot_score,
+                       "rot_t": rot_t.squeeze(),
+                       "rot_score": rot_score.squeeze(),
                        "rot_score_scaling": rot_score_scaling}
         return diff_feat_t
 
@@ -92,4 +92,5 @@ class DDPM_Dataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        return self.data[idx]
+        rot_vec = Rotation.from_matrix(self.data[idx]).as_rotvec()
+        return rot_vec
