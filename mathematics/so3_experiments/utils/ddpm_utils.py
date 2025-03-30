@@ -174,6 +174,10 @@ def random_normal_so3(std_idx, angular_distrib, device='cpu'):
     w = u * theta[..., None]
     return w
 
+def random_uniform_so3(size, device='cpu'):
+    q = F.normalize(torch.randn(list(size)+[4,], device=device), dim=-1)    # (..., 4)
+    return rotation_to_so3vec(quaternion_to_rotation_matrix(q))
+
 
 class VarianceSchedule(nn.Module):
 
@@ -256,3 +260,22 @@ class RotationTransition(nn.Module):
         return v_next
 
 
+def quaternion_1ijk_to_rotation_matrix(q):
+    """
+    (1 + ai + bj + ck) -> R
+    Args:
+        q:  (..., 3)
+    """
+    b, c, d = torch.unbind(q, dim=-1)
+    s = torch.sqrt(1 + b**2 + c**2 + d**2)
+    a, b, c, d = 1/s, b/s, c/s, d/s
+
+    o = torch.stack(
+        (
+            a**2 + b**2 - c**2 - d**2,  2*b*c - 2*a*d,  2*b*d + 2*a*c,
+            2*b*c + 2*a*d,  a**2 - b**2 + c**2 - d**2,  2*c*d - 2*a*b,
+            2*b*d - 2*a*c,  2*c*d + 2*a*b,  a**2 - b**2 - c**2 + d**2,
+        ),
+        -1,
+    )
+    return o.reshape(q.shape[:-1] + (3, 3))

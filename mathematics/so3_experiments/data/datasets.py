@@ -92,5 +92,5 @@ class DDPM_Dataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        rot_vec = Rotation.from_matrix(self.data[idx]).as_rotvec()
-        return rot_vec
+
+        return self.data[idx][None]

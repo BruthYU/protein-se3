@@ -150,7 +150,7 @@ def plot_se3(se3_vec, ax_lim=15, title=None, ax=None):
     ax.set_axis_off()
     # ax.view_init(azim= 30, elev= 20)
 
-    plt.savefig('b.pdf')
+    plt.savefig('figs/b.pdf')
     fig.show()
 
 def viz_frames(frames, mask, ax=None, scale_factor=0.5, title='', ax_lim=8):

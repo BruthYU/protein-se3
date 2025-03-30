@@ -25,3 +25,4 @@ evaluate/eval_data
 /lightning/data/rfdiffusion/lmdb_protein.csv
 /lightning/.vscode
 /evaluate/workspace
+/mathematics/plot/figs/

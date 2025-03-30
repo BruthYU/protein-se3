@@ -20,7 +20,7 @@ from utils.plotting import plot_so3
 from utils.optimal_transport import so3_wasserstein as wasserstein
 from lightning.data.foldflow.so3_helpers import norm_SO3, expmap
 from lightning.data.foldflow.so3_condflowmatcher import SO3ConditionalFlowMatcher
-from mathematics.foldflow.so3_experiments.models.models import MLP
+from mathematics.so3_experiments.models.models import MLP
 from torch.utils.data import DataLoader
 from data.datasets import SpecialOrthogonalGroup, SDE_Dataset, concat_np_features
 
