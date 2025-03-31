@@ -60,10 +60,10 @@ def fig2pil(fig):
 
 
 def plot_scatter3D(xyz, xlim=(-1.0, 1.0), ylim=(-1.0, 1.0), zlim=(-1.0, 1.0), adjust=False):
-    fig = plt.figure(figsize=(8, 8), dpi=80)
+    fig = plt.figure(figsize=(8, 8), dpi=300)
     ax = plt.axes(projection="3d")
 
-    ax.scatter3D(xyz[:, 0], xyz[:, 1], xyz[:, 2], s=0.5)
+    ax.scatter3D(xyz[:, 0], xyz[:, 1], xyz[:, 2], c=xyz[:, 1], cmap="viridis", s=2)
     if adjust:
         ax.view_init(azim=20, elev=20)
     ax.axes.set_xlim3d(xlim[0], xlim[1])

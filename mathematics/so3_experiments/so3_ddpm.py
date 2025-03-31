@@ -17,7 +17,7 @@ torch.manual_seed(0)
 
 os.environ['GEOMSTATS_BACKEND'] = 'pytorch'
 _config.DEFAULT_DTYPE = torch.cuda.FloatTensor
-savedir = "models/so3_synthetic"
+savedir = "results/ddpm"
 os.makedirs(savedir, exist_ok=True)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -25,10 +25,11 @@ so3_conf = OmegaConf.load('./config/ddpm.yaml')
 n_timestep = so3_conf.diffusion.n_timestep
 
 # Load toy dataset
-data = np.load('data/bunny_group.npy',allow_pickle=True)
+dataset_name = "bunny_group.npy"
+data = np.load(f'data/{dataset_name}',allow_pickle=True)
 print('size of toy dataset: ', len(data))
 fig = plot_so3(data, adjust=True)
-plt.savefig('figs/so3_synthetic_data.png', dpi=300)
+plt.savefig(f"{savedir}/{dataset_name.split('.')[0]}.png", dpi=300)
 plt.show()
 
 
@@ -37,7 +38,7 @@ Rotation_DDPM = RotationTransition(num_steps=n_timestep)
 
 
 # Load Dataset
-dataset_name = "bunny_group.npy"
+
 trainset = DDPM_Dataset(split="train", name=dataset_name)
 trainloader = DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
 testset = DDPM_Dataset(split="test", name=dataset_name)
@@ -93,14 +94,14 @@ def inference(model, rot_t, t):
 
 
 # Main Loop
-def main_loop(model, optimizer, num_epochs=150, display=True):
+def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
     losses = []
     w1ds = []
     w2ds = []
 
-    global_step = 0
+    final_traj = None
     for epoch in tqdm(range(num_epochs)):
-        if (epoch % 100) == 0:
+        if (epoch % 10) == 0:
             n_test = testset.data.shape[0]
             # traj = torch.tensor(Rotation.random(n_test).as_rotvec()).to(device)
 
@@ -120,11 +121,12 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
                                torch.tensor(final_traj).to(device).double().detach(), power=2)
             w1ds.append(w_d1)
             w2ds.append(w_d2)
-            if display:
-                plot_so3(final_traj)
-                plt.show()
-                print('wassterstein-1 distance:', w_d1)
-                print('wassterstein-2 distance:', w_d2)
+        if display and (epoch % 100)==0:
+            plot_so3(final_traj)
+            plt.savefig(os.path.join(savedir, f"dataset_{dataset_name.split('.')[0]}_run{run_idx}_epoch{epoch}.jpg"))
+            plt.show()
+            print('wassterstein-1 distance:', w_d1)
+            print('wassterstein-2 distance:', w_d2)
 
         # Train Model
         for _, data in enumerate(trainloader):
@@ -147,9 +149,29 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
 
 
 
-dim = 3  # network ouput is 3 dimensional (rot_vec matrix)
-model = UMLP(dim=dim, time_varying=True).to(device).double()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
-model, losses, w1ds, w2ds = main_loop(model, optimizer, num_epochs=1000, display=True)
+# dim = 3  # network ouput is 3 dimensional (rot_vec matrix)
+# model = UMLP(dim=dim, time_varying=True).to(device).double()
+# optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
+# model, losses, w1ds, w2ds = main_loop(model, optimizer, num_epochs=1000, display=True)
 
+'''
+Results for Multiple Runs
+'''
+w1ds_runs = []
+w2ds_runs = []
+losses_runs = []
+num_runs = 3
+for i in range(num_runs):
+    print('doing run ', i)
+    dim = 3  # network ouput is 3 dimensional (rot_vec matrix)
+    model = UMLP(dim=dim, time_varying=True).double().to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
+    model, losses, w1ds, w2ds = main_loop(model, optimizer, run_idx=i, num_epochs=1000, display=True)
 
+    w1ds_runs.append(w1ds)
+    w2ds_runs.append(w2ds)
+    losses_runs.append(losses)
+
+losses_runs = np.array(losses_runs)
+w1ds_runs = np.array(w1ds_runs)
+w2ds_runs = np.array(w2ds_runs)

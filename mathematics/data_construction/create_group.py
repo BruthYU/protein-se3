@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-file_name = 'bunny_normalized.npy'
+file_name = 'bunny.npy'
 points = np.load(file_name)
 
 def rotationMatrixToEulerAngles(R):

@@ -2,7 +2,7 @@ import os
 import numpy as np
 import torch
 
-from mathematics.foldflow.so3_experiments.data.datasets import SDE_Dataset
+
 
 os.environ['GEOMSTATS_BACKEND'] = 'pytorch'
 from einops import rearrange
@@ -29,7 +29,7 @@ from lightning.data.framediff.so3_diffuser import SO3Diffuser
 from lightning.data.framediff.so3_utils import Log, Exp
 
 _config.DEFAULT_DTYPE = torch.cuda.FloatTensor
-savedir = "models/so3_synthetic"
+savedir = "results/score_matching"
 os.makedirs(savedir, exist_ok=True)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -39,11 +39,11 @@ print(device)
 '''
 Load toy dataset
 '''
-data = np.load('data/bunny_group.npy',allow_pickle=True)
+dataset_name = "bunny_group.npy"
+data = np.load(f'data/{dataset_name}',allow_pickle=True)
 print('size of toy dataset: ', len(data))
-
 fig = plot_so3(data, adjust=True)
-plt.savefig('figs/so3_synthetic_data.png', dpi=300)
+plt.savefig(f"{savedir}/{dataset_name.split('.')[0]}.png", dpi=300)
 plt.show()
 
 '''
@@ -56,7 +56,7 @@ so3_diffuser = SO3Diffuser(so3_conf.so3)
 '''
 Load Dataset
 '''
-dataset_name = "bunny_group.npy"
+
 collate_fn = lambda x: concat_np_features(x, add_batch_dim=True)
 
 trainset = SDE_Dataset(split="train", name=dataset_name, data_conf=so3_conf.so3, so3_diffuser=so3_diffuser)
@@ -98,13 +98,13 @@ def inference(model, rot_t, t, dt, noise_scale=1.0):
 '''
 Main Loop
 '''
-def main_loop(model, optimizer, num_epochs=150, display=True):
+def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
     losses = []
     w1ds = []
     w2ds = []
 
 
-    global_step = 0
+    final_traj = None
     for epoch in tqdm(range(num_epochs)):
         if (epoch % 10) == 0:
             n_test = testset.data.shape[0]
@@ -125,11 +125,12 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
             w2ds.append(w_d2)
 
 
-            if display:
-                plot_so3(final_traj)
-                plt.show()
-                print('wassterstein-1 distance:', w_d1)
-                print('wassterstein-2 distance:', w_d2)
+        if display and (epoch % 100) == 0:
+            plot_so3(final_traj)
+            plt.savefig(os.path.join(savedir,  f"dataset_{dataset_name.split('.')[0]}_run{run_idx}_epoch{epoch}.jpg"))
+            plt.show()
+            print('wassterstein-1 distance:', w_d1)
+            print('wassterstein-2 distance:', w_d2)
 
 
         for _, batch in enumerate(trainloader):
@@ -155,92 +156,36 @@ def main_loop(model, optimizer, num_epochs=150, display=True):
 
 
 
-dim = 3  # network ouput is 3 dimensional (rot_vec matrix)
-model = MLP(dim=dim, time_varying=True).to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
-model, losses, w1ds, w2ds = main_loop(model, optimizer, num_epochs=1000, display=True)
+# dim = 3  # network ouput is 3 dimensional (rot_vec matrix)
+# model = MLP(dim=dim, time_varying=True).to(device)
+# optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
+# model, losses, w1ds, w2ds = main_loop(model, optimizer, num_epochs=1000, display=True)
 
 
 
-# '''
-# Results for Multiple Runs
-# '''
-# w1ds_runs = []
-# w2ds_runs = []
-# losses_runs = []
-# num_runs = 5
-# for i in range(num_runs):
-#     print('doing run ', i)
-#     dim = 3  # network ouput is 3 dimensional (rot_vec matrix)
-#     model = MLP(dim=dim, diffuser=so3_diffuser, time_varying=True).to(device)
-#     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5, foreach=False)
-#     model, losses, w1ds, w2ds = main_loop(model, optimizer, num_epochs=1000, display=True)
-#
-#     w1ds_runs.append(w1ds)
-#     w2ds_runs.append(w2ds)
-#     losses_runs.append(losses)
-#
-# losses_runs = np.array(losses_runs)
-# w1ds_runs = np.array(w1ds_runs)
-# w2ds_runs = np.array(w2ds_runs)
-#
-#
-# '''
-# Plot Results
-# '''
-# losses_runs = np.array(losses_runs)
-# w1ds_runs = np.array(w1ds_runs)
-# w2ds_runs = np.array(w2ds_runs)
-# # mean of w1s
-# w1s_mean = np.mean(w1ds_runs, axis=0)
-# w1s_std = np.std(w1ds_runs, axis=0)
-# # mean of w2s
-# w2s_mean = np.mean(w2ds_runs, axis=0)
-# w2s_std = np.std(w2ds_runs, axis=0)
-#
-# print('w1s_mean', w1s_mean[-1])
-# print('w1s_std', w1s_std[-1])
-# print('w2s_mean', w2s_mean[-1])
-# print('w2s_std', w2s_std[-1])
-#
-# import seaborn as sns
-# sns.set_theme(style="darkgrid")
-#
-# fig, ax = plt.subplots(1, 2, figsize=(18, 5))
-#
-# x = np.arange(0, 80, 10)
-#
-# ax[0].plot(x, w1s_mean)
-# ax[0].fill_between(x, w1s_mean - w1s_std, w1s_mean + w1s_std, color='C0', alpha=0.4)
-# ax[0].set_xlabel('epoch', fontsize=14)
-# ax[0].set_ylabel('1-Wasserstein distance', fontsize=14)
-#
-# ax[1].plot(x, w2s_mean)
-# ax[1].fill_between(x, w2s_mean - w2s_std, w2s_mean + w2s_std, color='C0', alpha=0.4)
-# ax[1].set_xlabel('epoch', fontsize=14)
-# ax[1].set_ylabel('2-Wasserstein-2 distance', fontsize=14)
-# plt.show()
-#
-#
-# '''
-# Plot losses
-# '''
-# print(losses_runs.shape)
-# plt.plot(losses_runs[1])
-# plt.xlabel('iteration')
-# plt.ylabel('loss')
-# plt.show()
-#
-#
-# '''inference on the full dataset for visualization'''
-#
-# plt.style.use('default')
-# n_test = data.shape[0]
-# traj = torch.tensor(Rotation.random(n_test).as_matrix()).to(device).reshape(-1, 9)
-# for t in torch.linspace(0, 1, 200):
-#     t = torch.tensor([t]).to(device).repeat(n_test)
-#     dt = torch.tensor([1/200]).to(device)
-#     traj = inference(model, traj, t, dt)
-# final_traj = rearrange(traj, 'b (c d) -> b c d', c=3, d=3)
-# fig = plot_so3(final_traj)
-# plt.show()
+'''
+Results for Multiple Runs
+'''
+w1ds_runs = []
+w2ds_runs = []
+losses_runs = []
+num_runs = 3
+for i in range(num_runs):
+    print('doing run ', i)
+    dim = 3  # network ouput is 3 dimensional (rot_vec matrix)
+    model = MLP(dim=dim, time_varying=True).double().to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
+    model, losses, w1ds, w2ds = main_loop(model, optimizer, run_idx=i, num_epochs=1000, display=True)
+
+    w1ds_runs.append(w1ds)
+    w2ds_runs.append(w2ds)
+    losses_runs.append(losses)
+
+losses_runs = np.array(losses_runs)
+w1ds_runs = np.array(w1ds_runs)
+w2ds_runs = np.array(w2ds_runs)
+
+np.save(os.path.join(savedir, f"{dataset_name.split('.')[0]}_losses.npy", losses))
+np.save(os.path.join(savedir, f"{dataset_name.split('.')[0]}_w1ds.npy", w1ds))
+np.save(os.path.join(savedir, f"{dataset_name.split('.')[0]}_w2ds.npy", w2ds))
+
