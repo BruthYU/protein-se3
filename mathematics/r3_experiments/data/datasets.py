@@ -57,3 +57,16 @@ class R3Dataset(Dataset):
 
     def __getitem__(self, idx):
         return self.data[idx][None]
+
+
+class R3_SDE_Dataset(Dataset):
+    def __init__(self, root="data", name="lorenz.npy", split="train", seed=12345):
+        data = np.load(f"{root}/{name}").astype("float32")
+        self.data = get_split(data, split, seed)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+
+        return self.data[idx][None]
