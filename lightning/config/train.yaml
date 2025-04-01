@@ -1,5 +1,5 @@
 defaults:
-  - method: framediff
+  - method: genie2
 
 hydra:
   run:

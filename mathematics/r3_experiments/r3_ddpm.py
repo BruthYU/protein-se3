@@ -10,6 +10,8 @@ import numpy as np
 from utils.plotting import plot_r3
 from data.datasets import R3Dataset
 from utils.ddpm_utils import r3_ddpm_scheduler
+from scipy.stats import wasserstein_distance_nd
+from models.models import MLP
 torch.manual_seed(0)
 
 os.environ['GEOMSTATS_BACKEND'] = 'pytorch'
@@ -44,74 +46,63 @@ testloader = DataLoader(trainset, batch_size=32, shuffle=True, num_workers=0)
 
 
 
-def loss_fn(rot_pred, rot_0):
+def loss_fn(z_pred, z):
     # sample noise
     mse = torch.nn.MSELoss(reduction='sum')
-    loss = mse(rot_pred, rot_0)
+    loss = mse(z_pred, z)
     return loss
 
 # Add Noise
-def rot_diffusion(rot_0, t):
-    # rot_0 [N,3]
-    rot_t, _ = Rotation_DDPM.add_noise(rot_0, t) # []
-    return rot_t
+def trans_diffusion(trans_0, t):
+    z = torch.randn_like(trans_0)
+    # Apply noise
+    trans_t = scheduler.sqrt_alphas_cumprod[t].view(-1, 1, 1) + \
+              scheduler.sqrt_one_minus_alphas_cumprod[t].view(-1, 1, 1) * z
+    return trans_t
 
 
 # DDPM Inference
-def inference(model, rot_t, t):
+def inference(model, trans_t, t):
     # rot_t rotation vector
     with torch.no_grad():
         t_tensor = t / n_timestep
-        input = torch.cat([rot_t, t_tensor[:, None, None]], dim=-1)
+        input = torch.cat([trans_t, t_tensor[:, None, None]], dim=-1)
         # rotvec_next, rotmatrix_next = model(input)
-        rotvec_next = model(input)
-
-
-        # Compute posterior
-        rot_next = Rotation_DDPM.denoise(rotvec_next, t.cpu())
-    return rot_next.to(device)
+        z_pred = model(input)
+        w_z = (1. - scheduler.alphas[t]) / scheduler.sqrt_one_minus_alphas_cumprod[t]
+        trans_next = (1. / scheduler.sqrt_alphas[t]).view(-1, 1, 1) * (trans_t - w_z.view(-1, 1, 1) * z_pred)
+    return trans_next
 
 
 # Main Loop
 def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
     losses = []
     w1ds = []
-    w2ds = []
 
     final_traj = None
     for epoch in tqdm(range(num_epochs)):
         if (epoch % 10) == 0:
             n_test = testset.data.shape[0]
-            # traj = torch.tensor(Rotation.random(n_test).as_rotvec()).to(device)
-
-            traj = random_normal_so3(torch.tensor(n_timestep)[None].expand(n_test,1),
-                                     Rotation_DDPM.angular_distrib_fwd)
-            # traj = random_uniform_so3([n_test, 1])
-            traj = traj.double().to(device)
+            traj= torch.randn((n_test, 1, 3))
             steps = range(n_timestep, 0, -1)
             for t in steps:
                 t = torch.tensor([t]).to(device).repeat(n_test)
                 traj = inference(model, traj, t)
-            final_traj = so3vec_to_rotation(traj).squeeze()
-            final_traj = final_traj.cpu().numpy()
-            w_d1 = wasserstein(torch.tensor(testset.data).to(device).double().detach(),
-                               torch.tensor(final_traj).to(device).double().detach(), power=1)
-            w_d2 = wasserstein(torch.tensor(testset.data).to(device).double().detach(),
-                               torch.tensor(final_traj).to(device).double().detach(), power=2)
+            final_traj = traj.sqeenze().cpu().numpy()
+            test_data = testset.data.squeeze()
+            w_d1 = wasserstein_distance_nd(final_traj, test_data)
             w1ds.append(w_d1)
-            w2ds.append(w_d2)
+
         if display and (epoch % 100)==0:
-            plot_so3(final_traj, adjust=True, title='SO(3) DDPM')
+            plot_r3(final_traj, adjust=True, title='R3 DDPM')
             plt.savefig(os.path.join(savedir, f"dataset_{dataset_name.split('.')[0]}_run{run_idx}_epoch{epoch}.jpg"))
             plt.show()
             print('wassterstein-1 distance:', w_d1)
-            print('wassterstein-2 distance:', w_d2)
 
         # Train Model
         for _, data in enumerate(trainloader):
+            trans_0 = torch.tensor(data).to(device)
 
-            rotmatrix_0 = torch.tensor(data).double().to(device)
-            rotvec_0 = rotation_to_so3vec(rotmatrix_0)
             t = torch.randint(n_timestep, size=(rotvec_0.shape[0],)).to(device) + 1
             rotvec_t = rot_diffusion(rotvec_0.cpu(), t.cpu()).to(device)
             t_tensor = t / n_timestep

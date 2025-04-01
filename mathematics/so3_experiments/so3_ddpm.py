@@ -124,7 +124,7 @@ def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
         if display and (epoch % 100)==0:
             plot_so3(final_traj, adjust=True, title='SO(3) DDPM')
             plt.savefig(os.path.join(savedir, f"dataset_{dataset_name.split('.')[0]}_run{run_idx}_epoch{epoch}.jpg"))
-            plt.show()
+            # plt.show()
             print('wassterstein-1 distance:', w_d1)
             print('wassterstein-2 distance:', w_d2)
 
