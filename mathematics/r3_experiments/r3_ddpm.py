@@ -21,7 +21,7 @@ os.makedirs(savedir, exist_ok=True)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 r3_conf = OmegaConf.load('./config/r3_ddpm.yaml')
-n_timestep = r3_conf.diffusion.n_timestep
+n_timestep = r3_conf.n_timestep
 
 # Load toy dataset
 dataset_name = "lorenz.npy"
@@ -54,18 +54,18 @@ def loss_fn(z_pred, z):
 
 # Add Noise
 def trans_diffusion(trans_0, t):
-    z = torch.randn_like(trans_0)
+    z = torch.randn_like(trans_0).to(device)
     # Apply noise
-    trans_t = scheduler.sqrt_alphas_cumprod[t].view(-1, 1, 1) + \
+    trans_t = scheduler.sqrt_alphas_cumprod[t].view(-1, 1, 1) * trans_0 + \
               scheduler.sqrt_one_minus_alphas_cumprod[t].view(-1, 1, 1) * z
-    return trans_t
+    return trans_t, z
 
 
 # DDPM Inference
 def inference(model, trans_t, t):
     # rot_t rotation vector
     with torch.no_grad():
-        t_tensor = t / n_timestep
+        t_tensor = (t / n_timestep).to(device)
         input = torch.cat([trans_t, t_tensor[:, None, None]], dim=-1)
         # rotvec_next, rotmatrix_next = model(input)
         z_pred = model(input)
@@ -83,12 +83,12 @@ def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
     for epoch in tqdm(range(num_epochs)):
         if (epoch % 10) == 0:
             n_test = testset.data.shape[0]
-            traj= torch.randn((n_test, 1, 3))
+            traj= torch.randn((n_test, 1, 3)).to(device)
             steps = range(n_timestep, 0, -1)
             for t in steps:
-                t = torch.tensor([t]).to(device).repeat(n_test)
+                t = torch.tensor([t]).repeat(n_test)
                 traj = inference(model, traj, t)
-            final_traj = traj.sqeenze().cpu().numpy()
+            final_traj = traj.squeeze().cpu().numpy()
             test_data = testset.data.squeeze()
             w_d1 = wasserstein_distance_nd(final_traj, test_data)
             w1ds.append(w_d1)
@@ -101,51 +101,42 @@ def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
 
         # Train Model
         for _, data in enumerate(trainloader):
-            trans_0 = torch.tensor(data).to(device)
-
-            t = torch.randint(n_timestep, size=(rotvec_0.shape[0],)).to(device) + 1
-            rotvec_t = rot_diffusion(rotvec_0.cpu(), t.cpu()).to(device)
-            t_tensor = t / n_timestep
-            input = torch.cat([rotvec_t, t_tensor[:,None,None]],dim=-1)
-            rotvec_pred = model(input)
-            # rotvec_pred, rotmatrix_pred = model(input)
-            # rot_loss = rotation_matrix_cosine_loss(rotmatrix_pred, rotmatrix_0).sum()
-            rot_loss = loss_fn(rotvec_pred, rotvec_0)
-            rot_loss.backward()
+            trans_0 = torch.tensor(data)
+            t = torch.randint(n_timestep, size=(trans_0.shape[0],)) + 1
+            # Apply noise
+            trans_t, z = trans_diffusion(trans_0.to(device), t.to(device))
+            t_tensor = (t / n_timestep).to(device)
+            input = torch.cat([trans_t, t_tensor[:,None,None]],dim=-1).to(device)
+            z_pred = model(input)
+            trans_loss = loss_fn(z_pred, z.to(device))
+            trans_loss.backward()
             optimizer.step()
-            losses.append(rot_loss.detach().cpu().numpy())
+            losses.append(trans_loss.detach().cpu().numpy())
             optimizer.zero_grad()
-    return model, np.array(losses), np.array(w1ds), np.array(w2ds)
+    return model, np.array(losses), np.array(w1ds)
 
 
 
-# dim = 3  # network ouput is 3 dimensional (rot_vec matrix)
-# model = UMLP(dim=dim, time_varying=True).to(device).double()
-# optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
-# model, losses, w1ds, w2ds = main_loop(model, optimizer, num_epochs=1000, display=True)
+
 
 '''
 Results for Multiple Runs
 '''
 w1ds_runs = []
-w2ds_runs = []
 losses_runs = []
 num_runs = 3
 for i in range(num_runs):
     print('doing run ', i)
     dim = 3  # network ouput is 3 dimensional (rot_vec matrix)
-    model = UMLP(dim=dim, time_varying=True).double().to(device)
+    model = MLP(dim=dim, time_varying=True).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
     model, losses, w1ds, w2ds = main_loop(model, optimizer, run_idx=i, num_epochs=1000, display=True)
 
     w1ds_runs.append(w1ds)
-    w2ds_runs.append(w2ds)
     losses_runs.append(losses)
 
 losses_runs = np.array(losses_runs)
 w1ds_runs = np.array(w1ds_runs)
-w2ds_runs = np.array(w2ds_runs)
 
 np.save(os.path.join(savedir, f"{dataset_name.split('.')[0]}_losses.npy"), losses_runs)
 np.save(os.path.join(savedir, f"{dataset_name.split('.')[0]}_w1ds.npy",), w1ds_runs)
-np.save(os.path.join(savedir, f"{dataset_name.split('.')[0]}_w2ds.npy"), w2ds_runs)
