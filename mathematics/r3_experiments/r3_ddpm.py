@@ -67,10 +67,16 @@ def inference(model, trans_t, t):
     with torch.no_grad():
         t_tensor = (t / n_timestep).to(device)
         input = torch.cat([trans_t, t_tensor[:, None, None]], dim=-1)
-        # rotvec_next, rotmatrix_next = model(input)
+
         z_pred = model(input)
         w_z = (1. - scheduler.alphas[t]) / scheduler.sqrt_one_minus_alphas_cumprod[t]
-        trans_next = (1. / scheduler.sqrt_alphas[t]).view(-1, 1, 1) * (trans_t - w_z.view(-1, 1, 1) * z_pred)
+        trans_mean = (1. / scheduler.sqrt_alphas[t]).view(-1, 1, 1) * (trans_t - w_z.view(-1, 1, 1) * z_pred)
+
+        trans_z = torch.randn_like(trans_mean).to(device)
+        trans_sigma = scheduler.sqrt_betas[t].view(-1, 1, 1)
+        trans_next = trans_mean + trans_sigma * trans_z
+
+
     return trans_next
 
 
@@ -94,7 +100,7 @@ def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
             w1ds.append(w_d1)
 
         if display and (epoch % 100)==0:
-            plot_r3(final_traj, adjust=True, title='R3 DDPM')
+            plot_r3(final_traj, title='R3 DDPM')
             plt.savefig(os.path.join(savedir, f"dataset_{dataset_name.split('.')[0]}_run{run_idx}_epoch{epoch}.jpg"))
             plt.show()
             print('wassterstein-1 distance:', w_d1)
