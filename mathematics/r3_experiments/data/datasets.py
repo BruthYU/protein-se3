@@ -42,7 +42,7 @@ def get_split(data, split, seed):
         elif split == "valid":
             data = data[indices[int(n * 0.8) : int(n * 0.9)]]
         elif split == "test":
-            data = data[indices[int(n * 0.7) : ]]
+            data = data[indices[int(n * 0.8) : ]]
             # data = data
     return data
 
@@ -60,13 +60,24 @@ class R3Dataset(Dataset):
 
 
 class R3_SDE_Dataset(Dataset):
-    def __init__(self, root="data", name="lorenz.npy", split="train", seed=12345):
+    def __init__(self, root="data", name="lorenz.npy", r3_diffuser=None, split="train", seed=12345):
         data = np.load(f"{root}/{name}").astype("float32")
         self.data = get_split(data, split, seed)
+        self.r3_diffuser = r3_diffuser
+        self.r3_conf = self.r3_diffuser._r3_conf
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-
-        return self.data[idx][None]
+        rng = np.random.default_rng(idx)
+        t = rng.uniform(self.r3_conf.min_t, 1.0)
+        trans_0 = self.data[idx][None]
+        trans_t, trans_score = self.r3_diffuser.forward_marginal(
+            trans_0, t)
+        trans_score_scaling = self.r3_diffuser.score_scaling(t)
+        diff_feat_t = {"t": np.array([t]),
+                       "trans_t": trans_t.squeeze(),
+                       "trans_score": trans_score.squeeze(),
+                       "trans_score_scaling": trans_score_scaling}
+        return diff_feat_t

@@ -1,18 +1,17 @@
 import os
 
 import matplotlib.pyplot as plt
-import torch
 from geomstats._backend import _backend_config as _config
 from omegaconf import OmegaConf
-from scipy.spatial.transform import Rotation
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from data.datasets import DDPM_Dataset
-from mathematics.so3_experiments.models.models import MLP, UMLP
+from mathematics.so3_experiments.models.models import UMLP
 from utils.ddpm_utils import *
 from utils.optimal_transport import so3_wasserstein as wasserstein
 from utils.plotting import plot_so3
+
 torch.manual_seed(0)
 
 os.environ['GEOMSTATS_BACKEND'] = 'pytorch'

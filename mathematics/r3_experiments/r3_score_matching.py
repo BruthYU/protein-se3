@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import torch
 from geomstats._backend import _backend_config as _config
 from omegaconf import OmegaConf
-from scipy.spatial.transform import Rotation
+
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
@@ -13,7 +13,7 @@ from scipy.stats import wasserstein_distance_nd
 from models.models import MLP
 from lightning.data.framediff.r3_diffuser import R3Diffuser
 torch.manual_seed(0)
-from data.datasets import R3_Dataset, concat_np_features
+from data.datasets import R3_SDE_Dataset, concat_np_features
 
 
 # set up
@@ -37,51 +37,47 @@ plt.show()
 
 # R3 Diffuser
 r3_conf = OmegaConf.load('./config/r3_score_matching.yaml')
-n_timestep = r3_conf.n_timestep
 r3_diffuser = R3Diffuser(r3_conf)
 
 
 # Load Dataset
-trainset = R3Dataset(split="train", name=dataset_name)
-trainloader = DataLoader(trainset, batch_size=32, shuffle=True, num_workers=0)
-testset = R3Dataset(split="test", name=dataset_name)
-testloader = DataLoader(trainset, batch_size=32, shuffle=True, num_workers=0)
+collate_fn = lambda x: concat_np_features(x, add_batch_dim=True)
+
+trainset = R3_SDE_Dataset(split="train", name=dataset_name, r3_diffuser=r3_diffuser)
+trainloader = DataLoader(
+    trainset, batch_size=64, shuffle=True, num_workers=0, collate_fn=collate_fn
+)
+
+
+testset = R3_SDE_Dataset(split="test", name=dataset_name, r3_diffuser=r3_diffuser)
+testloader = DataLoader(
+    trainset, batch_size=64, shuffle=True, num_workers=0, collate_fn=collate_fn
+)
 
 
 
 
-def loss_fn(z_pred, z):
-    # sample noise
-    mse = torch.nn.MSELoss(reduction='sum')
-    loss = mse(z_pred, z)
-    return loss
-
-# Add Noise
-def trans_diffusion(trans_0, t):
-    z = torch.randn_like(trans_0).to(device)
-    # Apply noise
-    trans_t = scheduler.sqrt_alphas_cumprod[t].view(-1, 1, 1) * trans_0 + \
-              scheduler.sqrt_one_minus_alphas_cumprod[t].view(-1, 1, 1) * z
-    return trans_t, z
-
-
-# DDPM Inference
-def inference(model, trans_t, t):
-    # rot_t rotation vector
+'''
+R3 SDE Inference
+'''
+def inference(model, trans_t, t, dt, noise_scale=1.0):
     with torch.no_grad():
-        t_tensor = (t / n_timestep).to(device)
-        input = torch.cat([trans_t, t_tensor[:, None, None]], dim=-1)
+        t_index = t <= r3_conf.min_t
+        t[t_index] = r3_conf.min_t
+        input = torch.cat([trans_t, t[:,None]],dim=-1)
+        trans_score = model(input)
 
-        z_pred = model(input)
-        w_z = (1. - scheduler.alphas[t]) / scheduler.sqrt_one_minus_alphas_cumprod[t]
-        trans_mean = (1. / scheduler.sqrt_alphas[t]).view(-1, 1, 1) * (trans_t - w_z.view(-1, 1, 1) * z_pred)
+        trans_t = trans_t.cpu().numpy()
+        trans_score = trans_score.cpu().numpy()
 
-        trans_z = torch.randn_like(trans_mean).to(device)
-        trans_sigma = scheduler.sqrt_betas[t].view(-1, 1, 1)
-        trans_next = trans_mean + trans_sigma * trans_z
-
-
-    return trans_next
+        trans_t_1 = r3_diffuser.reverse(
+            x_t= trans_t,
+            score_t= trans_score,
+            t=t[0].item(),
+            dt=dt.item(),
+            center=True,
+        )
+    return torch.tensor(trans_t_1).float().to(device)
 
 
 # Main Loop
@@ -93,11 +89,11 @@ def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
     for epoch in tqdm(range(num_epochs)):
         if (epoch % 10) == 0:
             n_test = testset.data.shape[0]
-            traj= torch.randn((n_test, 1, 3)).to(device)
-            steps = range(n_timestep, 0, -1)
-            for t in steps:
-                t = torch.tensor([t]).repeat(n_test)
-                traj = inference(model, traj, t)
+            traj = torch.tensor(r3_diffuser.sample_ref(n_test)).float().to(device)
+            for t in torch.linspace(1, 0, 200):
+                t = torch.tensor([t]).to(device).repeat(n_test).requires_grad_(True)
+                dt = torch.tensor([1 / 200]).to(device)
+                traj = inference(model, traj, t, dt)
             final_traj = traj.squeeze().cpu().numpy()
             test_data = testset.data.squeeze()
             w_d1 = wasserstein_distance_nd(final_traj, test_data)
@@ -110,16 +106,20 @@ def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
             print('wassterstein-1 distance:', w_d1)
 
         # Train Model
-        for _, data in enumerate(trainloader):
-            trans_0 = torch.tensor(data)
-            t = torch.randint(n_timestep, size=(trans_0.shape[0],)) + 1
-            # Apply noise
-            trans_t, z = trans_diffusion(trans_0.to(device), t.to(device))
-            t_tensor = (t / n_timestep).to(device)
-            input = torch.cat([trans_t, t_tensor[:,None,None]],dim=-1).to(device)
-            z_pred = model(input)
-            trans_loss = loss_fn(z_pred, z.to(device))
+        for _, batch in enumerate(trainloader):
+            for key in batch.keys():
+                batch[key] = torch.tensor(batch[key]).to(device)
+            trans_t = batch['trans_t'].float()
+            input = torch.cat([trans_t, batch['t']],dim=-1).float()
+            pred_trans_score = model(input)
+
+
+            trans_mse = (batch['trans_score'].float()- pred_trans_score) ** 2
+            trans_score_scaling = batch['trans_score_scaling']
+            trans_loss = torch.sum(
+                trans_mse / trans_score_scaling[:, None, None] ** 2)
             trans_loss.backward()
+
             optimizer.step()
             losses.append(trans_loss.detach().cpu().numpy())
             optimizer.zero_grad()
@@ -137,7 +137,7 @@ losses_runs = []
 num_runs = 3
 for i in range(num_runs):
     print('doing run ', i)
-    dim = 3  # network ouput is 3 dimensional (rot_vec matrix)
+    dim = 3  # network ouput is 3 dimensional (trans_vec matrix)
     model = MLP(dim=dim, time_varying=True).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
     model, losses, w1ds, w2ds = main_loop(model, optimizer, run_idx=i, num_epochs=1000, display=True)
