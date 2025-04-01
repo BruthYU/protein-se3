@@ -34,7 +34,7 @@ Load Dataset
 '''
 data = np.load(f'{root}/{dataset_name}')
 print('size of toy dataset: ', len(data))
-fig = plot_so3(data, adjust=True)
+fig = plot_so3(data, adjust=True,title="Target Distribution")
 
 plt.savefig(f"{savedir}/{dataset_name.split('.')[0]}.png", dpi=300)
 plt.show()
@@ -110,7 +110,7 @@ def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
             w2ds.append(w_d2)
 
         if display and (epoch % 100)==0:
-            plot_so3(final_traj, adjust=True)
+            plot_so3(final_traj, adjust=True, title='SO(3) Flow Matching')
             plt.savefig(os.path.join(savedir, f"dataset_{dataset_name.split('.')[0]}_run{run_idx}_epoch{epoch}.jpg"))
             plt.show()
             print('wassterstein-1 distance:', w_d1)
@@ -164,6 +164,6 @@ losses_runs = np.array(losses_runs)
 w1ds_runs = np.array(w1ds_runs)
 w2ds_runs = np.array(w2ds_runs)
 
-np.save(os.path.join(savedir, f"{dataset_name.split('.')[0]}_losses.npy", losses))
-np.save(os.path.join(savedir, f"{dataset_name.split('.')[0]}_w1ds.npy", w1ds))
-np.save(os.path.join(savedir, f"{dataset_name.split('.')[0]}_w2ds.npy", w2ds))
+np.save(os.path.join(savedir, f"{dataset_name.split('.')[0]}_losses.npy"), losses_runs)
+np.save(os.path.join(savedir, f"{dataset_name.split('.')[0]}_w1ds.npy",), w1ds_runs)
+np.save(os.path.join(savedir, f"{dataset_name.split('.')[0]}_w2ds.npy"), w2ds_runs)

@@ -59,16 +59,18 @@ def fig2pil(fig):
     return pil_im
 
 
-def plot_scatter3D(xyz, xlim=(-1.0, 1.0), ylim=(-1.0, 1.0), zlim=(-1.0, 1.0), adjust=False):
+def plot_scatter3D(xyz, xlim=(-1.0, 1.0), ylim=(-1.0, 1.0), zlim=(-1.0, 1.0), adjust=False,title=None):
     fig = plt.figure(figsize=(8, 8), dpi=300)
     ax = plt.axes(projection="3d")
 
-    ax.scatter3D(xyz[:, 0], xyz[:, 1], xyz[:, 2], c=xyz[:, 1], cmap="viridis", s=2)
+    ax.scatter3D(xyz[:, 0], xyz[:, 1], xyz[:, 2], c=xyz[:, 1], cmap="GnBu")
     if adjust:
         ax.view_init(azim=20, elev=20)
     ax.axes.set_xlim3d(xlim[0], xlim[1])
     ax.axes.set_ylim3d(ylim[0], ylim[1])
     ax.axes.set_zlim3d(zlim[0], zlim[1])
+    if title is not None:
+        ax.set_title(title, fontsize=18, y=0.96)
     return fig
 
 
@@ -133,13 +135,14 @@ def rotationMatrixToEulerAngles(R):
     return np.array([x, y, z])
 
 
-def plot_so3(x, adjust=False):
+def plot_so3(x, adjust=False,title=None):
     return plot_scatter3D(
         np.array([rotationMatrixToEulerAngles(x[i]) for i in range(len(x))]),
         (-math.pi/2, math.pi/2),
         (-math.pi/2, math.pi/2),
         (-math.pi/2, math.pi/2),
-        adjust = adjust
+        adjust = adjust,
+        title = title
     )
 
 
