@@ -1,0 +1,2 @@
+  n_timestep: 1000
+  schedule: cosine

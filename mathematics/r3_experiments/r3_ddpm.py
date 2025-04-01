@@ -9,6 +9,7 @@ from tqdm import tqdm
 import numpy as np
 from utils.plotting import plot_r3
 from data.datasets import R3Dataset
+from utils.ddpm_utils import r3_ddpm_scheduler
 torch.manual_seed(0)
 
 os.environ['GEOMSTATS_BACKEND'] = 'pytorch'
@@ -17,8 +18,8 @@ savedir = "results/ddpm"
 os.makedirs(savedir, exist_ok=True)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
-# so3_conf = OmegaConf.load('./config/ddpm.yaml')
-# n_timestep = so3_conf.diffusion.n_timestep
+r3_conf = OmegaConf.load('./config/r3_ddpm.yaml')
+n_timestep = r3_conf.diffusion.n_timestep
 
 # Load toy dataset
 dataset_name = "lorenz.npy"
@@ -29,7 +30,8 @@ plt.savefig(f"{savedir}/{dataset_name.split('.')[0]}.png", dpi=300)
 plt.show()
 
 
-
+# DDPM scheduler
+scheduler = r3_ddpm_scheduler(r3_conf)
 
 
 # Load Dataset
