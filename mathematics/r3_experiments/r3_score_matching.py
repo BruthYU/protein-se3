@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
 from utils.plotting import plot_r3
-from data.datasets import R3Dataset
+
 from scipy.stats import wasserstein_distance_nd
 from models.models import MLP
 from lightning.data.framediff.r3_diffuser import R3Diffuser
