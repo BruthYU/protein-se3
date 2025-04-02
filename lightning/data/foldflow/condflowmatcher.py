@@ -172,6 +172,43 @@ class ConditionalFlowMatcher:
         else:
             return t, xt, ut
 
+    def sample_location_and_conditional_flow_simple(self, x0, x1, return_noise=False):
+        """
+        Compute the sample xt (drawn from N(t * x1 + (one - t) * x0, sigma))
+        and the conditional vector field ut(x1|x0) = x1 - x0, see Eq.(15) [one].
+
+        Parameters
+        ----------
+        x0 : Tensor, shape (bs, dim)
+            represents the source minibatch
+        x1 : Tensor, shape (bs, dim)
+            represents the source minibatch
+        return_noise : bool
+            return the noise sample epsilon
+
+
+        Returns
+        -------
+        t : float, shape (bs, one)
+        xt : Tensor, shape (bs, dim)
+            represents the samples drawn from probability path pt
+        ut : conditional vector field ut(x1|x0) = x1 - x0
+        (optionally) eps: Tensor, shape (bs, dim) such that xt = mu_t + sigma_t * epsilon
+
+        References
+        ----------
+        [one] Improving and Generalizing Flow-Based Generative Models with minibatch optimal transport, Preprint, Tong et al.
+        """
+        t = torch.rand(x0.shape[0]).type_as(x0)
+        eps = 0
+        xt = self.sample_xt(x0, x1, t, eps)
+
+        ut = self.compute_conditional_flow(x0, x1, t, xt)
+        if return_noise:
+            return t, xt, ut, eps
+        else:
+            return t, xt, ut
+
     def compute_lambda(self, t):
         """Compute the lambda function, see Eq.(XXX) [one].
 

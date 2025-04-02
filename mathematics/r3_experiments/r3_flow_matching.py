@@ -58,19 +58,18 @@ def sample_ref(n_samples: float = 1):
     return np.random.normal(size=(n_samples, 3))
 
 def loss_fn(v, u, x):
-    res = v - u
-    mse = torch.nn.MSELoss(reduction='mean')
-    loss = mse(x, res)
+    # res = v - u
+    # mse = torch.nn.MSELoss(reduction='mean')
+    # loss = mse(x, res)
+    mse = torch.nn.MSELoss(reduction='sum')
+    loss = mse(v, u)
     return loss
 
 def inference(model, xt, t, dt, center=False):
     with torch.no_grad():
         vt = model(torch.cat([xt, t[:, None]], dim=-1))
-        perturb = -vt * dt
+        perturb = vt * dt
         x_t_1 = xt + perturb
-        if center:
-            com = np.sum(x_t_1, axis=-2)
-            x_t_1 -= com[..., None, :]
     return x_t_1
 
 
@@ -91,7 +90,7 @@ def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
         final_traj = None
         if epoch % 10 == 0:
             n_test = testset.data.shape[0]
-            traj = torch.tensor(sample_ref(n_test)).to(device)
+            traj = torch.randn(size=(n_test, 3)).to(device)
             for t in torch.linspace(0, 1, 200):
                 t = torch.tensor([t]).to(device).repeat(n_test).requires_grad_(True)
                 dt = torch.tensor([1 / 200]).to(device)
@@ -108,20 +107,20 @@ def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
 
 
         if display and (epoch % 100)==0:
-            plot_r3(final_traj, adjust=True, title='R3 Flow Matching')
+            plot_r3(final_traj, title='R3 Flow Matching')
             plt.savefig(os.path.join(savedir, f"dataset_{dataset_name.split('.')[0]}_run{run_idx}_epoch{epoch}.jpg"))
             plt.show()
             print('wassterstein-1 distance:', w_d1)
 
         for _, data in enumerate(trainloader):
             optimizer.zero_grad()
-            x1 = data
-            x0 = torch.randn(size=(len(x1), 1, 3)).to(device)
+            x1 = data.squeeze()
+            x0 = torch.randn(size=(len(x1), 3))
 
-            t, xt, ut = R3FM.sample_location_and_conditional_flow(x0.double(), x1.double())
+            t, xt, ut = R3FM.sample_location_and_conditional_flow_simple(x0.double(), x1.double())
             t = t.to(device)
-            xt = xt.to(device)
-            ut = ut.to(device)
+            xt = xt.squeeze().to(device)
+            ut = ut.squeeze().to(device)
 
             vt = model(torch.cat([xt, t[:, None]], dim=-1))
 
@@ -150,7 +149,7 @@ for i in range(num_runs):
     dim = 3  # network ouput is 3 dimensional (rot_vec matrix)
     model = MLP(dim=dim, time_varying=True).double().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
-    model, losses, w1ds, w2ds = main_loop(model, optimizer, run_idx=i, num_epochs=1000, display=True)
+    model, losses, w1ds = main_loop(model, optimizer, run_idx=i, num_epochs=1000, display=True)
 
     w1ds_runs.append(w1ds)
     losses_runs.append(losses)

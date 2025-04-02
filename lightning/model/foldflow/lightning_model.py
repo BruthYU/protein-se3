@@ -29,8 +29,7 @@ import time
 LOG = logging.getLogger(__name__)
 
 
-# TODO foldflow-model
-# TODO eval_fn
+
 class foldflow_Lightning_Model(pl.LightningModule):
     def __init__(self, conf):
         super().__init__()

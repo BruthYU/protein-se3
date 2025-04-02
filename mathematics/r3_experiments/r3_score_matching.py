@@ -140,7 +140,7 @@ for i in range(num_runs):
     dim = 3  # network ouput is 3 dimensional (trans_vec matrix)
     model = MLP(dim=dim, time_varying=True).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
-    model, losses, w1ds, w2ds = main_loop(model, optimizer, run_idx=i, num_epochs=1000, display=True)
+    model, losses, w1ds = main_loop(model, optimizer, run_idx=i, num_epochs=1000, display=True)
 
     w1ds_runs.append(w1ds)
     losses_runs.append(losses)
