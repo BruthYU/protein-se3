@@ -18,7 +18,7 @@ Z = np.sin(5*R)
 # Plot the surface.
 surf = ax.scatter3D(X, Y, Z,c=Z, cmap="plasma")
 
-points = np.concatenate([X,Y,Z]).T
+points = np.stack([X,Y,Z]).T
 
 np.save('sine.npy', points)
 

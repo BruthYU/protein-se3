@@ -68,6 +68,11 @@ def loss_fn(rot_pred, rot_0):
     # sample noise
     mse = torch.nn.MSELoss(reduction='sum')
     loss = mse(rot_pred, rot_0)
+    # B, L = rot_pred.shape[0], 1
+    # batch_identity = torch.eye(3)[None, :].repeat(B, 1, 1).to(device)
+    # R_Diff = batch_identity - torch.bmm(rot_pred.transpose(1, 2), rot_0)  # (B,3,3)
+    # R_Distance_Norm = torch.linalg.matrix_norm(R_Diff)
+    # loss = (R_Distance_Norm ** 2).mean()
     return loss
 
 # Add Noise
@@ -111,7 +116,9 @@ def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
             steps = range(n_timestep, 0, -1)
             for t in steps:
                 t = torch.tensor([t]).to(device).repeat(n_test)
-                traj = inference(model, traj, t)
+                rot_pred = inference(model, traj, t)
+                traj = rot_diffusion(rot_pred.cpu(), (t-1).cpu()).to(device)
+
             final_traj = so3vec_to_rotation(traj).squeeze()
             final_traj = final_traj.cpu().numpy()
             w_d1 = wasserstein(torch.tensor(testset.data).to(device).double().detach(),
@@ -123,7 +130,7 @@ def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
         if display and (epoch % 100)==0:
             plot_so3(final_traj, adjust=True, title='SO(3) DDPM')
             plt.savefig(os.path.join(savedir, f"dataset_{dataset_name.split('.')[0]}_run{run_idx}_epoch{epoch}.jpg"))
-            # plt.show()
+            plt.show()
             print('wassterstein-1 distance:', w_d1)
             print('wassterstein-2 distance:', w_d2)
 

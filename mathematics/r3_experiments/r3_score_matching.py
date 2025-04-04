@@ -27,7 +27,7 @@ print(device)
 
 
 # Load toy dataset
-dataset_name = "lorenz.npy"
+dataset_name = "sine.npy"
 data = np.load(f'data/{dataset_name}',allow_pickle=True)
 print('size of toy dataset: ', len(data))
 fig = plot_r3(data, title="Target Distribution")

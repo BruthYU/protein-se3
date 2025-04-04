@@ -39,7 +39,7 @@ print(device)
 '''
 Load toy dataset
 '''
-dataset_name = "bunny_group.npy"
+dataset_name = "spiral_group.npy"
 data = np.load(f'data/{dataset_name}',allow_pickle=True)
 print('size of toy dataset: ', len(data))
 fig = plot_so3(data, adjust=True,title="Target Distribution")

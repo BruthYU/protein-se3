@@ -28,10 +28,10 @@ print(device)
 
 
 # Load toy dataset
-dataset_name = "lorenz.npy"
+dataset_name = "sine.npy"
 data = np.load(f'data/{dataset_name}',allow_pickle=True)
 print('size of toy dataset: ', len(data))
-fig = plot_r3(data, title="Target R3 Distribution A")
+fig = plot_r3(data, title="Target R3 Distribution B")
 plt.savefig(f"{savedir}/{dataset_name.split('.')[0]}.png", dpi=300)
 plt.show()
 
