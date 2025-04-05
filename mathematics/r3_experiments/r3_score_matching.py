@@ -27,7 +27,7 @@ print(device)
 
 
 # Load toy dataset
-dataset_name = "sine.npy"
+dataset_name = "lorenz.npy"
 data = np.load(f'data/{dataset_name}',allow_pickle=True)
 print('size of toy dataset: ', len(data))
 fig = plot_r3(data, title="Target Distribution")
@@ -100,7 +100,7 @@ def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
             w1ds.append(w_d1)
 
         if display and (epoch % 100)==0:
-            plot_r3(final_traj, title='R3 DDPM')
+            plot_r3(final_traj, title='R3 Score Matching')
             plt.savefig(os.path.join(savedir, f"dataset_{dataset_name.split('.')[0]}_run{run_idx}_epoch{epoch}.jpg"))
             plt.show()
             print('wassterstein-1 distance:', w_d1)
