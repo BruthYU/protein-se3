@@ -69,8 +69,9 @@ def plot_scatter3D(xyz, xlim=(-1.0, 1.0), ylim=(-1.0, 1.0), zlim=(-1.0, 1.0), ad
     ax.axes.set_xlim3d(xlim[0], xlim[1])
     ax.axes.set_ylim3d(ylim[0], ylim[1])
     ax.axes.set_zlim3d(zlim[0], zlim[1])
+    ax.tick_params(axis='both', which='major', labelsize=12)
     if title is not None:
-        ax.set_title(title, fontsize=18, y=0.96)
+        ax.set_title(title, fontsize=36, y=1)
     return fig
 
 

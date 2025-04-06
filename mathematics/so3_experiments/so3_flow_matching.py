@@ -27,14 +27,14 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
 root = "data"
-dataset_name = "spiral_group.npy"
+dataset_name = "bunny_group.npy"
 
 '''
 Load Dataset
 '''
 data = np.load(f'{root}/{dataset_name}')
 print('size of toy dataset: ', len(data))
-fig = plot_so3(data, adjust=True,title="Target Distribution")
+fig = plot_so3(data, adjust=True,title="Target SO(3) Distribution A")
 
 plt.savefig(f"{savedir}/{dataset_name.split('.')[0]}.png", dpi=300)
 plt.show()
@@ -148,7 +148,7 @@ Results for Multiple Runs
 w1ds_runs = []
 w2ds_runs = []
 losses_runs = []
-num_runs = 3
+num_runs = 1
 for i in range(num_runs):
     print('doing run ', i)
     dim = 9  # network ouput is 3 dimensional (rot_vec matrix)

@@ -27,7 +27,7 @@ n_timestep = so3_conf.diffusion.n_timestep
 dataset_name = "bunny_group.npy"
 data = np.load(f'data/{dataset_name}',allow_pickle=True)
 print('size of toy dataset: ', len(data))
-fig = plot_so3(data, adjust=True,title="Target Distribution")
+fig = plot_so3(data, adjust=True,title="Target SO(3) Distribution A")
 plt.savefig(f"{savedir}/{dataset_name.split('.')[0]}.png", dpi=300)
 plt.show()
 
@@ -166,7 +166,7 @@ Results for Multiple Runs
 w1ds_runs = []
 w2ds_runs = []
 losses_runs = []
-num_runs = 3
+num_runs = 1
 for i in range(num_runs):
     print('doing run ', i)
     dim = 3  # network ouput is 3 dimensional (rot_vec matrix)

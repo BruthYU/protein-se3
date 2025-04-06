@@ -27,10 +27,10 @@ print(device)
 
 
 # Load toy dataset
-dataset_name = "lorenz.npy"
+dataset_name = "sine.npy"
 data = np.load(f'data/{dataset_name}',allow_pickle=True)
 print('size of toy dataset: ', len(data))
-fig = plot_r3(data, title="Target Distribution")
+fig = plot_r3(data, title=r"Target $R^3$ Distribution A")
 plt.savefig(f"{savedir}/{dataset_name.split('.')[0]}.png", dpi=300)
 plt.show()
 
@@ -100,7 +100,7 @@ def main_loop(model, optimizer, run_idx=0, num_epochs=150, display=True):
             w1ds.append(w_d1)
 
         if display and (epoch % 100)==0:
-            plot_r3(final_traj, title='R3 Score Matching')
+            plot_r3(final_traj, title='$R^3$ Score Matching')
             plt.savefig(os.path.join(savedir, f"dataset_{dataset_name.split('.')[0]}_run{run_idx}_epoch{epoch}.jpg"))
             plt.show()
             print('wassterstein-1 distance:', w_d1)
@@ -134,7 +134,7 @@ Results for Multiple Runs
 '''
 w1ds_runs = []
 losses_runs = []
-num_runs = 3
+num_runs = 1
 for i in range(num_runs):
     print('doing run ', i)
     dim = 3  # network ouput is 3 dimensional (trans_vec matrix)
