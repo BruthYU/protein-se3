@@ -1,39 +1,28 @@
 # @package _global_
-method_name: genie2
+method_name: genie1
 dataset:
   cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/jsonl
   min_n_res: 60
   max_n_res: 320
   max_n_chain: 1
 
-  motif_prob: 1.0
-  motif_min_pct_res: 0.05
-  motif_max_pct_res: 0.5
-  motif_min_n_seg: 1
-  motif_max_n_seg: 4
-
 diffusion:
   n_timestep: 1000
   schedule: cosine
 
 model:
-
-
   # General
-  c_s: 384
+  c_s: 128
   c_p: 128
-  rescale: 1
+
 
   # Single feature network
-  c_pos_emb: 256
-  c_chain_emb: 64
-  c_timestep_emb: 512
+  c_pos_emb: 128
+  c_timestep_emb: 128
 
   # Pair feature network
   relpos_k: 32
-  template_dist_min: 2
-  template_dist_step: 0.5
-  template_dist_n_bin: 37
+  template_type: v1
 
   # Pair transform network
   n_pair_transform_layer: 5
@@ -46,7 +35,7 @@ model:
   pair_transition_n: 4
 
   # Structure netowrk
-  n_structure_layer: 8
+  n_structure_layer: 5
   n_structure_block: 1
   c_hidden_ipa: 16
   n_head_ipa: 12
@@ -82,8 +71,8 @@ experiment:
 inference:
   task_type: scaffold # scaffold
   unconditional:
-    weights_path: ${hydra:runtime.cwd}/resource/genie2/last.ckpt
-    output_dir: ./genie2_outputs/
+    weights_path: ${hydra:runtime.cwd}/resource/genie1/last.ckpt
+    output_dir: ./genie1_outputs/
     num_samples: 5 # number of samples per length
     batch_size: 4 # number of samples with once inference
     scale: 0.6 # Sampling noise scale
@@ -92,19 +81,13 @@ inference:
     length_step: 1
 
   scaffold:
-    csv_path: ${hydra:runtime.cwd}/resource/genie2/benchmark.csv
-    weights_path: ${hydra:runtime.cwd}/resource/genie2/last.ckpt
-    output_dir: ./genie2_outputs/
+    csv_path: ${hydra:runtime.cwd}/resource/genie1/benchmark.csv
+    weights_path: ${hydra:runtime.cwd}/resource/genie1/last.ckpt
+    output_dir: ./genie1_outputs/
     num_samples: 2 # number of samples per task
     batch_size: 2 # number of samples with once inference
     scale: 0.4 # Sampling noise scale
     strength: 0
     motif_name: null
-    datadir: ${hydra:runtime.cwd}/resource/genie2/design25
-
-
-
-
-
-
+    datadir: ${hydra:runtime.cwd}/resource/genie1/design25
 
