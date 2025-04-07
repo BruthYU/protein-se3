@@ -30,7 +30,7 @@ def save_as_pdb(seq, coords, filename, ca_only=True):
             residue_name = aa_123[seq.upper()[residue_idx - 1]]
             line = 'ATOM  ' + pad_left(str(atom_idx), 5) + '  ' + pad_right(atom, 3) + ' ' + \
                    residue_name + ' ' + 'A' + pad_left(str(residue_idx), 4) + ' ' + '   ' + \
-                   pad_left(str(coords[i][0]), 8) + pad_left(str(coords[i][1]), 8) + pad_left(str(coords[i][2]), 8) + \
+                   pad_left(str(coords[i][0]), 12) + pad_left(str(coords[i][1]), 12) + pad_left(str(coords[i][2]), 12) + \
                    '     ' + '      ' + '   ' + '  ' + pad_left(atom[0], 2)
             file.write(line + '\n')
 
@@ -61,13 +61,13 @@ class genie1_Sampler:
         min_length = self.infer_conf.min_n_res
         max_length = self.infer_conf.max_n_res
 
-        for length in trange(min_length, max_length + 1):
+        for length in range(min_length, max_length + 1):
             for batch_idx in range(self.infer_conf.num_batches):
                 mask = torch.cat([
                     torch.ones((self.infer_conf.batch_size, length)),
                     torch.zeros((self.infer_conf.batch_size, self.conf.dataset.max_n_res - length))
                 ], dim=1).to(self.device)
-                ts = self.lightning_module.p_sample_loop(mask, self.infer_conf.noise_scale, verbose=False)[-1]
+                ts = self.lightning_module.p_sample_loop(mask, self.infer_conf.noise_scale, verbose=True)[-1]
                 for batch_sample_idx in range(ts.shape[0]):
                     sample_idx = batch_idx * self.infer_conf.batch_size + batch_sample_idx
                     coords = ts[batch_sample_idx].trans.detach().cpu().numpy()
