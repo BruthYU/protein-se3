@@ -65,8 +65,8 @@ class genie1_Dataset(data.Dataset):
     def __getitem__(self, idx):
         chain_feats = self.lmdb_cache.get_cache_csv_row(idx)
         coords = chain_feats['bb_positions']
-        n_res = coords
-        coords = np.concatenate([coords, np.zeros(((self.data_conf.max_n_res - n_res) * 3, 3))], axis=0)
+        n_res = len(coords)
+        coords = np.concatenate([coords, np.zeros((self.data_conf.max_n_res - n_res, 3))], axis=0)
         mask = np.concatenate([np.ones(n_res), np.zeros(self.data_conf.max_n_res - n_res)])
         return coords, mask
 

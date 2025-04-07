@@ -32,7 +32,7 @@ class genie1_Lightning_Model(pl.LightningModule):
 
     def setup_schedule(self):
 
-        self.betas = get_betas(self.config.diffusion['n_timestep'], self.config.diffusion['schedule']).to(self.device)
+        self.betas = get_betas(self.diff_conf.n_timestep, self.diff_conf.schedule).to(self.device)
         self.alphas = 1. - self.betas
         self.alphas_cumprod = torch.cumprod(self.alphas, 0)
         self.alphas_cumprod_prev = torch.cat([torch.Tensor([1.]).to(self.device), self.alphas_cumprod[:-1]])
@@ -54,17 +54,17 @@ class genie1_Lightning_Model(pl.LightningModule):
     def transform(self, batch):
 
         coords, mask = batch
-        coords = coords.float()
+        ca_coords = coords.float()
         mask = mask.float()
 
-        ca_coords = coords[:, 1::3]
+
         trans = ca_coords - torch.mean(ca_coords, dim=1, keepdim=True)
         rots = compute_frenet_frames(trans, mask)
 
         return T(rots, trans), mask
 
     def sample_timesteps(self, num_samples):
-        return torch.randint(0, self.config.diffusion['n_timestep'], size=(num_samples,)).to(self.device)
+        return torch.randint(0, self.diff_conf.n_timestep, size=(num_samples,)).to(self.device)
 
     def sample_frames(self, mask):
         trans = torch.randn((mask.shape[0], mask.shape[1], 3)).to(self.device)
@@ -155,5 +155,5 @@ class genie1_Lightning_Model(pl.LightningModule):
         s = self.sample_timesteps(t0.shape[0])
         ts, tnoise = self.q(t0, s, mask)
         loss = self.loss_fn(tnoise, ts, s, mask)
-        self.log('train_loss', loss, on_step=True, on_epoch=True)
+        self.log('train_loss', loss, on_step=True, on_epoch=True,prog_bar=True)
         return loss

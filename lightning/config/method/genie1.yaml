@@ -53,15 +53,15 @@ experiment:
   use_distributed_sampler: True
   use_wandb: False
   check_val_every_n_epoch: null
-  num_epoch: 100
-  ckpt_freq: 10
+  num_epoch: 10
+  ckpt_freq: 2
   lr_scheduler: null
   monitor: train_loss
   precision: 32
 
   # Experiment metadata
   seed: 100
-  batch_size: 8 #
+  batch_size: 2 #
   log_every_n_step: 1000
 
   condition_loss_weight: 1
@@ -69,25 +69,15 @@ experiment:
 
 
 inference:
-  task_type: scaffold # scaffold
-  unconditional:
-    weights_path: ${hydra:runtime.cwd}/resource/genie1/last.ckpt
-    output_dir: ./genie1_outputs/
-    num_samples: 5 # number of samples per length
-    batch_size: 4 # number of samples with once inference
-    scale: 0.6 # Sampling noise scale
-    max_length: 60
-    min_length: 50
-    length_step: 1
+  ckpt_path: ${hydra:runtime.cwd}/resource/genie1/last.ckpt
+  output_dir: ./genie1_outputs/
+  batch_size: 5 # number of samples with once inference
+  num_batches: 2
+  noise_scale: 0.6
+  min_n_res: 60
+  max_n_res: 62
 
-  scaffold:
-    csv_path: ${hydra:runtime.cwd}/resource/genie1/benchmark.csv
-    weights_path: ${hydra:runtime.cwd}/resource/genie1/last.ckpt
-    output_dir: ./genie1_outputs/
-    num_samples: 2 # number of samples per task
-    batch_size: 2 # number of samples with once inference
-    scale: 0.4 # Sampling noise scale
-    strength: 0
-    motif_name: null
-    datadir: ${hydra:runtime.cwd}/resource/genie1/design25
+
+
+
 

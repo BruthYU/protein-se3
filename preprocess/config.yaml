@@ -1,7 +1,7 @@
 csv_path: ./pkl/jsonl/metadata.csv
 cache_path: .cache/jsonl
 filtering:
-  max_len: 512
+  max_len: 320
   min_len: 60
   # Selects a subset of examples. Useful for debugging.
   subset: null

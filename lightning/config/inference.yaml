@@ -1,7 +1,7 @@
 
 
 defaults:
-  - method: rfdiffusion
+  - method: genie1
 
 
 hydra:

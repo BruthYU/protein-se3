@@ -38,7 +38,7 @@ class foldflow_Sampler:
         self.model_conf = self.conf.model
         self.log = logging.getLogger(__name__)
         self.output_dir = self.infer_conf.output_dir
-        self.log = logging.getLogger(__name__)
+
 
 
         # Set-up accelerator
