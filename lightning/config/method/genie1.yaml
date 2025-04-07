@@ -71,8 +71,8 @@ experiment:
 inference:
   ckpt_path: ${hydra:runtime.cwd}/resource/genie1/last.ckpt
   output_dir: ./genie1_outputs/
-  batch_size: 5 # number of samples with once inference
-  num_batches: 2
+  batch_size: 2 # number of samples with once inference
+  num_batches: 1
   noise_scale: 0.6
   min_n_res: 60
   max_n_res: 62

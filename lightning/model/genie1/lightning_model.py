@@ -10,7 +10,7 @@ from lightning.model.genie1.schedule import get_betas
 from lightning.data.genie1.loss import rmsd
 from lightning.data.genie1.affine_utils import T
 from lightning.data.genie1.geo_utils import compute_frenet_frames
-
+from tqdm import tqdm
 
 class genie1_Lightning_Model(pl.LightningModule):
     def __init__(self, conf):
@@ -157,3 +157,17 @@ class genie1_Lightning_Model(pl.LightningModule):
         loss = self.loss_fn(tnoise, ts, s, mask)
         self.log('train_loss', loss, on_step=True, on_epoch=True,prog_bar=True)
         return loss
+
+    def p_sample_loop(self, mask, noise_scale, verbose=True):
+        if not self.setup:
+            self.setup_schedule()
+            self.setup = True
+        ts = self.sample_frames(mask)
+        ts_seq = [ts]
+        for i in tqdm(reversed(range(self.diff_conf.n_timestep)), desc='sampling loop time step',
+                      total=self.diff_conf.n_timestep, disable=not verbose):
+            s = torch.Tensor([i] * mask.shape[0]).long().to(self.device)
+            ts = self.p(ts, s, mask, noise_scale)
+            ts_seq.append(ts)
+        return ts_seq
+
