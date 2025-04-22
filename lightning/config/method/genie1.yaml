@@ -1,7 +1,7 @@
 # @package _global_
 method_name: genie1
 dataset:
-  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/jsonl
+  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/processed_pdb
   min_n_res: 60
   max_n_res: 320
   max_n_chain: 1

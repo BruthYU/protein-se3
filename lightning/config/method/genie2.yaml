@@ -1,7 +1,7 @@
 # @package _global_
 method_name: genie2
 dataset:
-  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/jsonl
+  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/processed_pdb
   min_n_res: 60
   max_n_res: 320
   max_n_chain: 1
@@ -80,16 +80,16 @@ experiment:
 
 
 inference:
-  task_type: scaffold # scaffold
+  task_type: unconditional # scaffold
   unconditional:
     weights_path: ${hydra:runtime.cwd}/resource/genie2/last.ckpt
     output_dir: ./genie2_outputs/
-    num_samples: 5 # number of samples per length
-    batch_size: 4 # number of samples with once inference
+    num_samples: 10 # number of samples per length
+    batch_size: 2 # number of samples with once inference
     scale: 0.6 # Sampling noise scale
-    max_length: 60
-    min_length: 50
-    length_step: 1
+    max_length: 100
+    min_length: 100
+    length_step: 100
 
   scaffold:
     csv_path: ${hydra:runtime.cwd}/resource/genie2/benchmark.csv

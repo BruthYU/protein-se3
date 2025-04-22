@@ -1,0 +1,23 @@
+# Configuration for inference on SE(3) diffusion experiments.
+inference:
+  workspace: ../../workspace
+  name: null
+  gpu_id: null  # CUDA GPU to use
+  seed: 123
+  # Directory of software, weights, and outputs.
+  pmpnn_dir: ../../ProteinMPNN/
+
+
+
+  samples:
+    # Number of backbone samples per sequence length.
+    samples_per_length: 10
+    # Number of ESMFdold samples per backbone sample.
+    seq_per_sample: 8
+    # Minimum sequence length to sample.
+    min_length: 100
+    # Maximum sequence length to sample.
+    max_length: 100
+    # gap between lengths to sample. i.e. this script will sample all lengths
+    # in range(min_length, max_length, length_step)
+    length_step: 100

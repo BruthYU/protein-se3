@@ -90,9 +90,9 @@ class NewBatchSampler:
             replica_csv = self._data_csv
 
 
-        if 'cluster' in self._data_csv:
-            replica_csv = replica_csv.groupby('cluster').sample(
-                1, random_state=self.seed + self.epoch)
+        # if 'cluster' in self._data_csv:
+        #     replica_csv = replica_csv.groupby('cluster').sample(
+        #         1, random_state=self.seed + self.epoch)
 
 
 
@@ -104,6 +104,7 @@ class NewBatchSampler:
                 self.max_batch_size,
                 self._data_conf.sampler.max_num_res_squared // seq_len ** 2 + 1,
             )
+            len_df.sample(frac=1, random_state=self.seed + self.epoch)
             batch_df = len_df[:max_batch_size]
             batch_indices = batch_df['index'].tolist()
             batch_repeats = math.floor(max_batch_size / len(batch_indices))

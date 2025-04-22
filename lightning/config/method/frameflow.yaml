@@ -1,14 +1,14 @@
 # @package _global_
 method_name: frameflow
 dataset:
-  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/jsonl
+  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/processed_pdb
   cluster_path: ${hydra:runtime.cwd}/data/clusters-by-entity-30.txt
   # Available tasks: hallucination, inpainting
   task: hallucination
   seed: 123
 
   sampler:
-    max_batch_size: 256
+    max_batch_size: 64
     max_num_res_squared: 500_000
 
   add_plddt_mask: False
@@ -143,14 +143,14 @@ interpolant:
 
 inference:
   seed: 123
-  task: scaffolding
+  task: unconditional
   output_dir: frameflow_outputs/
-  ckpt_path: ${hydra:runtime.cwd}/resource/frameflow/last.ckpt
+  ckpt_path: ${hydra:runtime.cwd}/resource/frameflow/cluster_length_batch.ckpt
   samples:
     samples_per_length: 10
-    min_length: 60
-    max_length: 128
-    length_step: 1
+    min_length: 100
+    max_length: 100
+    length_step: 100
     overwrite: False
     csv_path: ${hydra:runtime.cwd}/resource/frameflow/benchmark.csv
     target_dir: ${hydra:runtime.cwd}/resource/frameflow/targets

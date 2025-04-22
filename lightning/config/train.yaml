@@ -1,6 +1,5 @@
 defaults:
-  - method: genie1
-
+  - method: frameflow
 hydra:
   run:
     dir: ./hydra_train/${now:%Y-%m-%d_%H-%M-%S}_${method_name}

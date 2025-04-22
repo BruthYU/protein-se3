@@ -11,7 +11,7 @@ source activate mlfold
 folder_with_pdbs="../inputs/PDB_complexes/pdbs/"
 
 output_dir="../outputs/example_2_outputs"
-if [ ! -d $output_dir ]
+if [ ! -d $output_dir ] 
 then
     mkdir -p $output_dir
 fi

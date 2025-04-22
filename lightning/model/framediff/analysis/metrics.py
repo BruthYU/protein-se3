@@ -2,7 +2,7 @@
 import mdtraj as md
 import numpy as np
 from . import utils as au
-import lightning.data.framediff.dataloader as du
+import preprocess.tools.utils as du
 from evaluate.openfold.np import residue_constants
 from evaluate.openfold.np.relax import amber_minimize
 import tree

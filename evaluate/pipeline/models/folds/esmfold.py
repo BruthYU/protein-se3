@@ -34,7 +34,7 @@ class ESMFold(FoldModel):
 				[N, N] Predicted Aligned Error matrix.
 		"""
 		with torch.no_grad():
-			output = self.model.infer(seq, num_recycles=3)
+			output = self.model.infer(seq, num_recycles=None)
 			pdb_str = self.model.output_to_pdb(output)[0]
 			pae = (output['aligned_confidence_probs'].cpu().numpy()[0] * np.arange(64)).mean(-1) * 31
 			mask = output['atom37_atom_exists'].cpu().numpy()[0,:,1] == 1

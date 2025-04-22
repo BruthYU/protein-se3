@@ -196,22 +196,28 @@ class BuildCache:
             ]
 
         if filter_conf.max_len is not None:
+            print(f'max_len: {filter_conf.max_len}')
             pdb_csv = pdb_csv[pdb_csv.modeled_seq_len <= filter_conf.max_len]
 
         if filter_conf.min_len is not None:
+            print(f'min_len: {filter_conf.min_len}')
             pdb_csv = pdb_csv[pdb_csv.modeled_seq_len >= filter_conf.min_len]
 
         if filter_conf.max_helix_percent is not None and pdb_csv.columns.__contains__("helix_percent"):
+            print(f"max_helix_percent:{filter_conf.max_helix_percent}")
             pdb_csv = pdb_csv[pdb_csv.helix_percent < filter_conf.max_helix_percent]
 
         if filter_conf.max_loop_percent is not None and pdb_csv.columns.__contains__("coil_percent"):
+            print(f"max_loop_percent:{filter_conf.max_loop_percent}")
             pdb_csv = pdb_csv[pdb_csv.coil_percent < filter_conf.max_loop_percent]
 
         if filter_conf.min_beta_percent is not None and pdb_csv.columns.__contains__("strand_percent"):
+            print(f"min_beta_percent:{filter_conf.min_beta_percent}")
             pdb_csv = pdb_csv[pdb_csv.strand_percent > filter_conf.min_beta_percent]
 
         if filter_conf.rog_quantile is not None and filter_conf.rog_quantile > 0.0 \
                 and pdb_csv.columns.__contains__("radius_gyration"):
+            print(f"rog_quantile:{filter_conf.rog_quantile}")
             prot_rog_low_pass = _rog_quantile_curve(
                 pdb_csv, filter_conf.rog_quantile, np.arange(filter_conf.max_len)
             )

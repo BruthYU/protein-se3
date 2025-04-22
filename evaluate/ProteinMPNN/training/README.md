@@ -1,5 +1,5 @@
 # ProteinMPNN
-To train/retrain ProteinMPNN clone this github repo and install Python>=3.0, PyTorch, Numpy.
+To train/retrain ProteinMPNN clone this github repo and install Python>=3.0, PyTorch, Numpy. 
 
 The multi-chain training data (16.5 GB, PDB biounits, 2021 August 2) can be downloaded from here: `https://files.ipd.uw.edu/pub/training_sets/pdb_2021aug02.tar.gz`; The small subsample (47 MB) of this data for testing purposes can be downloaded from here: `https://files.ipd.uw.edu/pub/training_sets/pdb_2021aug02_sample.tar.gz`
 

@@ -90,16 +90,18 @@ class foldflow_Sampler:
             os.makedirs(length_dir, exist_ok=True)
             self.log.info(f"Sampling length {sample_length}: {length_dir}")
             for sample_i in range(self.sample_conf.samples_per_length):
-                sample_dir = os.path.join(length_dir, f"sample_{sample_i}")
-                if os.path.isdir(sample_dir):
-                    continue
+                sample_dir = os.path.join(length_dir, f"sample")
+                bb_traj_dir = os.path.join(length_dir, f"bb_traj")
+                x0_traj_dir = os.path.join(length_dir, f"x0_traj")
+                output_dir = {"idx":sample_i, "sample_dir":sample_dir, "bb_traj_dir":bb_traj_dir, "x0_traj_dir":x0_traj_dir}
+
                 os.makedirs(sample_dir, exist_ok=True)
                 sample_output = self.sample(sample_length)
                 traj_paths = self.save_traj(
                     sample_output["prot_traj"],
                     sample_output["rigid_0_traj"],
                     np.ones(sample_length),
-                    output_dir=sample_dir,
+                    output_dir=output_dir,
                 )
 
 
@@ -109,7 +111,7 @@ class foldflow_Sampler:
         bb_prot_traj: np.ndarray,
         x0_traj: np.ndarray,
         flow_mask: np.ndarray,
-        output_dir: str,
+        output_dir: dict,
     ):
         """Writes final sample and reverse flow matching trajectory.
 
@@ -135,9 +137,9 @@ class foldflow_Sampler:
 
         # Write sample.
         flow_mask = flow_mask.astype(bool)
-        sample_path = os.path.join(output_dir, "sample.pdb")
-        prot_traj_path = os.path.join(output_dir, "bb_traj.pdb")
-        x0_traj_path = os.path.join(output_dir, "x0_traj.pdb")
+        sample_path = os.path.join(output_dir['sample_dir'], f"sample_{output_dir['idx']}.pdb")
+        prot_traj_path = os.path.join(output_dir["bb_traj_dir"], f"bb_traj_{output_dir['idx']}.pdb")
+        x0_traj_path = os.path.join(output_dir["x0_traj_dir"], f"x0_traj_{output_dir['idx']}.pdb")
 
         # Use b-factors to specify which residues are flowed.
         b_factors = np.tile((flow_mask * 100)[:, None], (1, 37))

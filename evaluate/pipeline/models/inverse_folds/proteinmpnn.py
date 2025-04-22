@@ -16,7 +16,7 @@ from evaluate.ProteinMPNN.protein_mpnn_utils import (
 )
 from evaluate.ProteinMPNN.protein_mpnn_utils import ProteinMPNN as ProteinMPNNBase
 from evaluate.ProteinMPNN.protein_mpnn_utils import StructureDatasetPDB
-
+CA_ONLY = False
 
 class ProteinMPNN(InverseFoldModel):
 	"""
@@ -32,7 +32,7 @@ class ProteinMPNN(InverseFoldModel):
 		rootdir=os.path.join('../..', 'ProteinMPNN'),
 		model_name='v_48_020',
 		device='cuda:0',
-		num_samples=8,
+		num_samples=16,
 		sampling_temperature=0.1,
 	):
 		"""
@@ -50,12 +50,15 @@ class ProteinMPNN(InverseFoldModel):
 		"""
 		
 		# Load checkpoint
-		checkpoint_path = os.path.join(rootdir, 'ca_model_weights', f'{model_name}.pt')
+		if CA_ONLY:
+			checkpoint_path = os.path.join(rootdir, 'ca_model_weights', f'{model_name}.pt')
+		else:
+			checkpoint_path = os.path.join(rootdir, 'vanilla_model_weights', f'{model_name}.pt')
 		checkpoint = torch.load(checkpoint_path)
 
 		# Load model
 		self.model = ProteinMPNNBase(
-			ca_only=True,
+			ca_only=CA_ONLY,
 			num_letters=21,
 			node_features=128,
 			edge_features=128,
@@ -192,7 +195,7 @@ class ProteinMPNN(InverseFoldModel):
 		    	chain_M_pos, omit_AA_mask, residue_idx, dihedral_mask, tied_pos_list_of_lists_list, \
 		    	pssm_coef, pssm_bias, pssm_log_odds_all, bias_by_res_all, tied_beta = tied_featurize(
 		    		batch_clones, self.model.device, chain_id_dict, fixed_positions_dict, omit_AA_dict, \
-		    		tied_positions_dict, pssm_dict, bias_by_res_dict, ca_only=True
+		    		tied_positions_dict, pssm_dict, bias_by_res_dict, ca_only=CA_ONLY
 		    	)
 		    pssm_log_odds_mask = (pssm_log_odds_all > pssm_threshold).float() #1.0 for true, 0.0 for false
 		    name_ = batch_clones[0]['name']

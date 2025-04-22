@@ -2,7 +2,7 @@
 ![ProteinMPNN](https://docs.google.com/drawings/d/e/2PACX-1vTtnMBDOq8TpHIctUfGN8Vl32x5ISNcPKlxjcQJF2q70PlaH2uFlj2Ac4s3khnZqG1YxppdMr0iTyk-/pub?w=889&h=358)
 Read [ProteinMPNN paper](https://www.biorxiv.org/content/10.1101/2022.06.03.494563v1).
 
-To run ProteinMPNN clone this github repo and install Python>=3.0, PyTorch, Numpy.
+To run ProteinMPNN clone this github repo and install Python>=3.0, PyTorch, Numpy. 
 
 Full protein backbone models: `vanilla_model_weights/v_48_002.pt, v_48_010.pt, v_48_020.pt, v_48_030.pt`.
 
@@ -61,7 +61,7 @@ For example to make a conda environment to run ProteinMPNN:
 * `conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch` - install pytorch following steps from https://pytorch.org/
 -----------------------------------------------------------------------------------------------------
 These are provided `examples/`:
-* `submit_example_1.sh` - simple monomer example
+* `submit_example_1.sh` - simple monomer example 
 * `submit_example_2.sh` - simple multi-chain example
 * `submit_example_3.sh` - directly from the .pdb path
 * `submit_example_3_score_only.sh` - return score only (model's uncertainty)
@@ -97,7 +97,7 @@ NMYKYKKIGNKYIVSINNHTEIVKAIKEFCKEKNIKSGTINGIGQVGKVTLRFYNPETKEYTEKTFNDNFEISNLTGFIS
   author={Dauparas, Justas and Anishchenko, Ivan and Bennett, Nathaniel and Bai, Hua and Ragotte, Robert J and Milles, Lukas F and Wicky, Basile IM and Courbet, Alexis and de Haas, Rob J and Bethel, Neville and others},
   journal={Science},
   volume={378},
-  number={6615},
+  number={6615},  
   pages={49--56},
   year={2022},
   publisher={American Association for the Advancement of Science}

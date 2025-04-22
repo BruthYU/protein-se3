@@ -1,7 +1,7 @@
 # @package _global_
 method_name: foldflow
 dataset:
-  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/jsonl
+  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/processed_pdb
   cluster_path: ${hydra:runtime.cwd}/data/clusters-by-entity-30.txt
   filtering:
     max_len: 512
@@ -29,8 +29,8 @@ flow_matcher:
   flow_rot: True
   ot_fn: exact
   reg: 0.05 # only used if ot_fn is 'sinkhorn'.
-  ot_plan: True # Using OT plan to pair the noise with data. Default False.
-  stochastic_paths: True # Switches to stochastic
+  ot_plan: False # Using OT plan to pair the noise with data. Default False.
+  stochastic_paths: False # Switches to stochastic
 
   # R(3) Flow Matcher arguments
   r3:
@@ -54,7 +54,7 @@ model:
 
 
   node_embed_size: 256
-  edge_embed_size: 128
+  edge_embed_size: 256
   dropout: 0.0
   embed:
     index_embed_size: 32
@@ -102,7 +102,7 @@ experiment:
 
   # Training arguments
   log_freq: 100
-  batch_size: 16
+  batch_size: 256
   eval_batch_size: ${dataset.samples_per_eval_length}
   num_loader_workers: 12
   torch_num_threads: 8
@@ -119,7 +119,7 @@ experiment:
   prefetch_factor: 100
   use_gpu: True
   num_gpus: 1
-  sample_mode: cluster_length_batch
+  sample_mode: length_batch
 
 
 
@@ -167,7 +167,7 @@ inference:
   output_dir: ./foldflow_outputs
 
   # Path to model weights.
-  weights_path: ${hydra:runtime.cwd}/resource/foldflow/last.ckpt
+  weights_path: ${hydra:runtime.cwd}/resource/foldflow/length_batch.ckpt
 
   flow:
     # Number of steps.
@@ -179,13 +179,13 @@ inference:
 
   samples:
     # Number of backbone samples per sequence length.
-    samples_per_length: 1
+    samples_per_length: 10
     # Number of ESMFdold samples per backbone sample.
-    seq_per_sample: 5
+    seq_per_sample: 10
     # Minimum sequence length to sample.
     min_length: 100
     # Maximum sequence length to sample.
-    max_length: 110
+    max_length: 500
     # gap between lengths to sample. i.e. this script will sample all lengths
     # in range(min_length, max_length, length_step)
-    length_step: 2
+    length_step: 100
