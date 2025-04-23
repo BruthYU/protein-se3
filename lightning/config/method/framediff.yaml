@@ -1,7 +1,7 @@
 # @package _global_
 method_name: framediff
 dataset:
-  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/processed_pdb
+  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/processed_pdb_60_512
   cluster_path: ${hydra:runtime.cwd}/data/clusters-by-entity-30.txt
   min_t: 0.01
   #  samples_per_eval_length: 12
@@ -68,10 +68,10 @@ experiment:
   resume_ckpt_path: null
   strategy: ddp_find_unused_parameters_true
   use_distributed_sampler: False
-  check_val_every_n_epoch: 25
-  num_epoch: 800
+  check_val_every_n_epoch: 100
+  num_epoch: 200
   use_wandb: False
-  ckpt_freq: 10
+  ckpt_freq: 5
   lr_scheduler: step
   monitor: train_loss
 
@@ -86,7 +86,7 @@ experiment:
 
   # Training arguments
   log_freq: 1000
-  batch_size: 256
+  batch_size: 128
   steps_per_epoch: null
   num_loader_workers: 5
   precision: 32
@@ -95,7 +95,7 @@ experiment:
   max_squared_res: 500000
   prefetch_factor: 100
   use_gpu: False
-  train_sample_mode: cluster_length_batch
+  train_sample_mode: cluster_time_batch
   # num_gpus: 1
 
 
@@ -122,7 +122,7 @@ experiment:
   trans_loss_weight: 1.0
   rot_loss_weight: 0.5
   rot_loss_t_threshold: 0.2
-  separate_rot_loss: True
+  separate_rot_loss: False
   trans_x0_threshold: 1.0
   coordinate_scaling: ${frame.r3.coordinate_scaling}
   bb_atom_loss_weight: 1.0

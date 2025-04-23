@@ -1,7 +1,7 @@
 # @package _global_
 method_name: genie2
 dataset:
-  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/processed_pdb
+  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/processed_pdb_60_320
   min_n_res: 60
   max_n_res: 320
   max_n_chain: 1
@@ -64,15 +64,15 @@ experiment:
   use_distributed_sampler: True
   use_wandb: False
   check_val_every_n_epoch: null
-  num_epoch: 100
-  ckpt_freq: 10
+  num_epoch: 50
+  ckpt_freq: 2
   lr_scheduler: null
   monitor: train_loss
   precision: 32
 
   # Experiment metadata
   seed: 100
-  batch_size: 8 #
+  batch_size: 8  #
   log_every_n_step: 1000
 
   condition_loss_weight: 1

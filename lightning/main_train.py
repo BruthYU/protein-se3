@@ -36,7 +36,7 @@ def load_callbacks(conf):
     callback_list.append(plc.ModelCheckpoint(
         monitor= conf.experiment.monitor,
         filename='best-{epoch:02d}-{train_loss:.3f}',
-        save_top_k=2,
+        save_top_k=10,
         mode='min',
         save_last=True,
         every_n_epochs=conf.experiment.ckpt_freq,
@@ -58,7 +58,7 @@ def run(conf: DictConfig) -> None:
     if conf.experiment.use_wandb:
         # Change wandb working dir to hydra chdir
         os.environ["WANDB_DIR"] = os.path.abspath(os.getcwd())
-        wandb.login(key="7878871205533d1968d0e0736c7a47eb50d4ac69")
+        wandb.login(key="d3ba733a9724d200f4e3d1880be9dba42097fa59")
         pl_logger = WandbLogger(project=f"Lit-ProteinDGM", log_model='all')
 
 
