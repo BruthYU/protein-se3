@@ -148,8 +148,8 @@ inference:
   ckpt_path: ${hydra:runtime.cwd}/resource/frameflow/cluster_length_batch.ckpt
   samples:
     samples_per_length: 10
-    min_length: 100
-    max_length: 100
+    min_length: 500
+    max_length: 500
     length_step: 100
     overwrite: False
     csv_path: ${hydra:runtime.cwd}/resource/frameflow/benchmark.csv

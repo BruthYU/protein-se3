@@ -1,7 +1,7 @@
 
 
 defaults:
-  - method: framediff
+  - method: rfdiffusion
 
 
 hydra:

@@ -1,7 +1,7 @@
 # @package _global_
 method_name: foldflow
 dataset:
-  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/processed_pdb
+  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/processed_pdb_60_512
   cluster_path: ${hydra:runtime.cwd}/data/clusters-by-entity-30.txt
   filtering:
     max_len: 512
@@ -84,10 +84,10 @@ experiment:
   resume_ckpt_path: null
   strategy: ddp
   use_distributed_sampler: False
-  num_epoch: 800
-  check_val_every_n_epoch: 25
+  num_epoch: 200
+  check_val_every_n_epoch: 100
   use_wandb: False
-  ckpt_freq: 2
+  ckpt_freq: 5
   lr_scheduler: step
   monitor: train_loss
 
@@ -102,7 +102,7 @@ experiment:
 
   # Training arguments
   log_freq: 100
-  batch_size: 256
+  batch_size: 128
   eval_batch_size: ${dataset.samples_per_eval_length}
   num_loader_workers: 12
   torch_num_threads: 8
@@ -118,8 +118,7 @@ experiment:
   max_squared_res: 500000
   prefetch_factor: 100
   use_gpu: True
-  num_gpus: 1
-  sample_mode: length_batch
+  sample_mode: cluster_time_batch
 
 
 

@@ -11,7 +11,8 @@ import shutil
 from datetime import datetime
 from biotite.sequence.io import fasta
 import GPUtil
-
+import random
+import string
 from typing import Optional
 import sys
 sys.path.append("../..")
@@ -218,6 +219,7 @@ class Pipeline:
         return output
 
     def aggregate_scores(self):
+        designs_name = ''.join(random.choices(string.ascii_letters, k=4))
         score_file_names = os.listdir(self.scores_dir)
         score_file_names.sort()
         score_file_paths = [os.path.join(self.scores_dir, name) for name in score_file_names]
@@ -228,7 +230,7 @@ class Pipeline:
             min_row = df.loc[[min_index]]
             best_sample_path = min_row['sample_path'].item()
             best_rows.append(min_row)
-            shutil.copy(best_sample_path, os.path.join(self.designs_dir,f'design_{idx}.pdb'))
+            shutil.copy(best_sample_path, os.path.join(self.designs_dir,f'design_{designs_name}_{idx}.pdb'))
 
         info_csv = pd.concat(best_rows, ignore_index=True)
         info_csv.to_csv(os.path.join(self._workspace, 'info.csv'), index=False)

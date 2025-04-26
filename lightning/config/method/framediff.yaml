@@ -155,7 +155,7 @@ inference:
   # Directory of software, weights, and outputs.
   pt_hub_dir: ${hydra:runtime.cwd}/resource/torch/
   # Path to model weights.
-  weights_path: ${hydra:runtime.cwd}/resource/framediff/last.ckpt
+  weights_path: ${hydra:runtime.cwd}/resource/framediff/best-epoch=69-train_loss=2.001.ckpt
 
   diffusion:
     # Number of steps.
@@ -167,11 +167,11 @@ inference:
 
   samples:
     # Number of backbone samples per sequence length.
-    samples_per_length: 2
+    samples_per_length: 10
     # Minimum sequence length to sample.
-    min_length: 100
+    min_length: 500
     # Maximum sequence length to sample.
-    max_length: 100
+    max_length: 500
     # gap between lengths to sample. i.e. this script will sample all lengths
     # in range(min_length, max_length, length_step)
     length_step: 5

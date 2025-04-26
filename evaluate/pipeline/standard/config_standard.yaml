@@ -1,4 +1,5 @@
 # Configuration for inference on SE(3) diffusion experiments.
+method: FrameDiff
 inference:
   workspace: ../../workspace
   name: null

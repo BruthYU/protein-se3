@@ -384,6 +384,7 @@ class NewDistributedSampler(data.Sampler):
         '''
         eval_num = num_eval_lengths * self._batch_size
         '''
+        print(f'len data_csv {len(self._data_csv)}')
         all_lengths = np.sort(self._data_csv.modeled_seq_len.unique())
         length_indices = (len(all_lengths) - 1) * np.linspace(
             0.0, 1.0, self._data_conf.num_eval_lengths)
