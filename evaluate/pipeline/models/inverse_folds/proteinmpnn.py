@@ -16,7 +16,7 @@ from evaluate.ProteinMPNN.protein_mpnn_utils import (
 )
 from evaluate.ProteinMPNN.protein_mpnn_utils import ProteinMPNN as ProteinMPNNBase
 from evaluate.ProteinMPNN.protein_mpnn_utils import StructureDatasetPDB
-CA_ONLY = False
+CA_ONLY = True
 
 class ProteinMPNN(InverseFoldModel):
 	"""

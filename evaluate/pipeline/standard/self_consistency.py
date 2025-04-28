@@ -127,6 +127,7 @@ class Pipeline:
             '38',
             '--batch_size',
             '1',
+            '--ca_only'
         ]
         if self._infer_conf.gpu_id is not None:
             pmpnn_args.append('--device')

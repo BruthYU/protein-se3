@@ -82,13 +82,13 @@ experiment:
 inference:
   task_type: unconditional # scaffold
   unconditional:
-    weights_path: ${hydra:runtime.cwd}/resource/genie2/last.ckpt
+    weights_path: ${hydra:runtime.cwd}/resource/genie2/best-epoch=99-train_loss=0.632.ckpt
     output_dir: ./genie2_outputs/
     num_samples: 10 # number of samples per length
     batch_size: 2 # number of samples with once inference
     scale: 0.6 # Sampling noise scale
-    max_length: 100
-    min_length: 100
+    max_length: 500
+    min_length: 500
     length_step: 100
 
   scaffold:

@@ -15,7 +15,7 @@ dataset:
     rog_quantile: 0.96
   min_t: 0.01
   num_eval_lengths: 1
-  samples_per_eval_length: 4
+  samples_per_eval_length: 10
 
   num_t: 100
   max_same_res: 50 # the number of pdb with the same number of residue to use to compute the ot plan.
@@ -45,7 +45,7 @@ flow_matcher:
     min_sigma: 0.01
     max_sigma: 1.5
     axis_angle: True
-    inference_scaling: -0.01
+    inference_scaling: 10
     g: 0.1
 
 
@@ -54,7 +54,7 @@ model:
 
 
   node_embed_size: 256
-  edge_embed_size: 256
+  edge_embed_size: 128
   dropout: 0.0
   embed:
     index_embed_size: 32
@@ -84,8 +84,8 @@ experiment:
   resume_ckpt_path: null
   strategy: ddp
   use_distributed_sampler: False
-  num_epoch: 200
-  check_val_every_n_epoch: 100
+  num_epoch: 300
+  check_val_every_n_epoch: 10
   use_wandb: False
   ckpt_freq: 5
   lr_scheduler: step
@@ -166,8 +166,7 @@ inference:
   output_dir: ./foldflow_outputs
 
   # Path to model weights.
-  weights_path: ${hydra:runtime.cwd}/resource/foldflow/length_batch.ckpt
-
+  weights_path: ${hydra:runtime.cwd}/resource/foldflow/best-epoch=64-train_loss=1.992.ckpt
   flow:
     # Number of steps.
     num_t: 100
@@ -184,7 +183,7 @@ inference:
     # Minimum sequence length to sample.
     min_length: 100
     # Maximum sequence length to sample.
-    max_length: 500
+    max_length: 100
     # gap between lengths to sample. i.e. this script will sample all lengths
     # in range(min_length, max_length, length_step)
     length_step: 100

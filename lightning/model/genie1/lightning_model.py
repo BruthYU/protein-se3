@@ -55,8 +55,8 @@ class genie1_Lightning_Model(pl.LightningModule):
 
         coords, mask = batch
         ca_coords = coords.float()
-        mask = mask.float()
 
+        mask = mask.float()
 
         trans = ca_coords - torch.mean(ca_coords, dim=1, keepdim=True)
         rots = compute_frenet_frames(trans, mask)

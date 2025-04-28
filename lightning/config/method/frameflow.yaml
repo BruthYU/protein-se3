@@ -1,10 +1,10 @@
 # @package _global_
 method_name: frameflow
 dataset:
-  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/processed_pdb
+  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/processed_pdb_60_320
   cluster_path: ${hydra:runtime.cwd}/data/clusters-by-entity-30.txt
   # Available tasks: hallucination, inpainting
-  task: hallucination
+  task: inpainting
   seed: 123
 
   sampler:
@@ -66,7 +66,7 @@ experiment:
   resume_ckpt_path: null
   strategy: ddp
   num_epoch: 800
-  check_val_every_n_epoch: 25
+  check_val_every_n_epoch: 50
   use_distributed_sampler: False
   use_wandb: False
   ckpt_freq: 10

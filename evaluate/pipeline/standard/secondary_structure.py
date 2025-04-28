@@ -15,6 +15,15 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+from matplotlib.colors import LinearSegmentedColormap
+
+# 自定义一个白到红的渐变色图
+white_red = LinearSegmentedColormap.from_list('white_red', ['white', 'red'])
+
+
+
+
 class SecondaryStructure:
     def __init__(self, config: DictConfig):
         self.config = config
@@ -119,20 +128,25 @@ class SecondaryStructure:
         # draw heatmap for generated samples
         x = generate_points[:, 0]
         y = generate_points[:, 1]
-        grid_size = 0.2
+        grid_size = 0.1
         x_bins = np.arange(0, 1+grid_size, grid_size)
         y_bins = np.arange(0, 1+grid_size, grid_size)
         heatmap, xedges, yedges = np.histogram2d(x, y, bins=[x_bins, y_bins])
-        sns.heatmap(heatmap.T, cmap='YlGnBu', vmin=0, vmax=1)
-        plt.savefig(os.path.join(self.results_dir, 'generate_secondary_heatmap.png'))
-        # plt.imshow(heatmap.T, origin='lower',
-        #            extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-        #            )
-        # plt.colorbar(label='Point Count')
-        # plt.xlabel('X Coordinate')
-        # plt.ylabel('Y Coordinate')
-        # plt.title('Point Density Heatmap')
+        # ax = sns.heatmap(heatmap.T/len(x), cmap='YlGnBu', vmin=0, vmax=0.1)
+        # xticks = np.arange(0, 1, 0.2)
+        # yticks = np.arange(0, 1, 0.2)
+        #
+        # ax.set_xticks(xticks)
+        # ax.set_yticks(yticks)
         # plt.savefig(os.path.join(self.results_dir, 'generate_secondary_heatmap.png'))
+        plt.imshow(heatmap.T/len(x), origin='lower',
+                   extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+                   vmin=0, vmax=0.5, cmap=white_red)
+        plt.colorbar(label='Point Count')
+        plt.xlabel('X Coordinate')
+        plt.ylabel('Y Coordinate')
+        plt.title('Point Density Heatmap')
+        plt.savefig(os.path.join(self.results_dir, 'generate_secondary_heatmap.png'))
 
 
         # draw heatmap for designed structures

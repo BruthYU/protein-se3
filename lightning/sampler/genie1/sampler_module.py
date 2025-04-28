@@ -13,6 +13,8 @@ torch.set_float32_matmul_precision('high')
 
 
 def save_as_pdb(seq, coords, filename, ca_only=True):
+    coords = coords - np.mean(coords, axis=0, keepdims=True)
+    coords = np.around(coords, decimals=3)
     def pad_left(string, length):
         assert len(string) <= length
         return ' ' * (length - len(string)) + string
@@ -30,7 +32,7 @@ def save_as_pdb(seq, coords, filename, ca_only=True):
             residue_name = aa_123[seq.upper()[residue_idx - 1]]
             line = 'ATOM  ' + pad_left(str(atom_idx), 5) + '  ' + pad_right(atom, 3) + ' ' + \
                    residue_name + ' ' + 'A' + pad_left(str(residue_idx), 4) + ' ' + '   ' + \
-                   pad_left(str(coords[i][0]), 12) + pad_left(str(coords[i][1]), 12) + pad_left(str(coords[i][2]), 12) + \
+                   pad_left(str(coords[i][0]), 8) + pad_left(str(coords[i][1]), 8) + pad_left(str(coords[i][2]), 8) + \
                    '     ' + '      ' + '   ' + '  ' + pad_left(atom[0], 2)
             file.write(line + '\n')
 
