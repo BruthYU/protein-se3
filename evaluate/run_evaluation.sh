@@ -12,19 +12,21 @@ python standard_evaluate.py --version unconditional --rootdir ../../workspace
 # Pair Wise TM -> tm_info.csv
 cd ../diversity
 python diversity_evaluate.py --num_cpus 8 --rootdir ../../workspace
-# Max cluster (FoldSeek)
+
+
 cd ../../workspace
-foldseek easy-cluster designs res tmp -c 0.9
+# Max cluster (FoldSeek)
+#foldseek easy-cluster designs res tmp -c 0.9
 
 
 
 
 
 # Novelty (FoldSeek)
-# if the database has been downloaded already, comment two lines
-mkdir fs_db
+# if the database has been downloaded already, comment following lines
+#mkdir fs_db
 cd fs_db
-foldseek databases PDB pdb tmp
+#foldseek databases PDB pdb tmp
 
 foldseek easy-search ../designs pdb ../aln.m8 ../tmpSearchFolder --format-output "query,target,alntmscore" --exhaustive-search --max-accept 5 --num-iterations 3
 

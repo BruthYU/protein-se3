@@ -8,7 +8,7 @@ dataset:
   seed: 123
 
   sampler:
-    max_batch_size: 64
+    max_batch_size: 128
     max_num_res_squared: 500_000
 
   add_plddt_mask: False
@@ -147,10 +147,10 @@ inference:
   output_dir: frameflow_outputs/
   ckpt_path: ${hydra:runtime.cwd}/resource/frameflow/cluster_length_batch.ckpt
   samples:
-    samples_per_length: 10
-    min_length: 500
-    max_length: 500
-    length_step: 100
+    samples_per_length: 4
+    min_length: 61
+    max_length: 320
+    length_step: 1
     overwrite: False
     csv_path: ${hydra:runtime.cwd}/resource/frameflow/benchmark.csv
     target_dir: ${hydra:runtime.cwd}/resource/frameflow/targets

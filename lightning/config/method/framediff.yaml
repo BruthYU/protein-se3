@@ -142,7 +142,7 @@ experiment:
 
 inference:
   name: null
-  gpu_id: null  # CUDA GPU to use
+  gpu_id: 0  # CUDA GPU to use
   seed: 123
 
 
@@ -155,7 +155,7 @@ inference:
   # Directory of software, weights, and outputs.
   pt_hub_dir: ${hydra:runtime.cwd}/resource/torch/
   # Path to model weights.
-  weights_path: ${hydra:runtime.cwd}/resource/framediff/best-epoch=69-train_loss=2.001.ckpt
+  weights_path: ${hydra:runtime.cwd}/resource/framediff/best-epoch=149-train_loss=1.935.ckpt
 
   diffusion:
     # Number of steps.
@@ -167,11 +167,11 @@ inference:
 
   samples:
     # Number of backbone samples per sequence length.
-    samples_per_length: 10
+    samples_per_length: 4
     # Minimum sequence length to sample.
-    min_length: 500
+    min_length: 61
     # Maximum sequence length to sample.
-    max_length: 500
+    max_length: 320
     # gap between lengths to sample. i.e. this script will sample all lengths
     # in range(min_length, max_length, length_step)
-    length_step: 5
+    length_step: 1

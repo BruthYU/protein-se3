@@ -29,8 +29,8 @@ flow_matcher:
   flow_rot: True
   ot_fn: exact
   reg: 0.05 # only used if ot_fn is 'sinkhorn'.
-  ot_plan: False # Using OT plan to pair the noise with data. Default False.
-  stochastic_paths: False # Switches to stochastic
+  ot_plan: True # Using OT plan to pair the noise with data. Default False.
+  stochastic_paths: True # Switches to stochastic
 
   # R(3) Flow Matcher arguments
   r3:
@@ -84,7 +84,7 @@ experiment:
   resume_ckpt_path: null
   strategy: ddp
   use_distributed_sampler: False
-  num_epoch: 300
+  num_epoch: 100
   check_val_every_n_epoch: 10
   use_wandb: False
   ckpt_freq: 5
@@ -166,7 +166,7 @@ inference:
   output_dir: ./foldflow_outputs
 
   # Path to model weights.
-  weights_path: ${hydra:runtime.cwd}/resource/foldflow/best-epoch=64-train_loss=1.992.ckpt
+  weights_path: ${hydra:runtime.cwd}/resource/foldflow/best-epoch=99-train_loss=6.788.ckpt
   flow:
     # Number of steps.
     num_t: 100
@@ -179,11 +179,11 @@ inference:
     # Number of backbone samples per sequence length.
     samples_per_length: 10
     # Number of ESMFdold samples per backbone sample.
-    seq_per_sample: 10
+    seq_per_sample: 8
     # Minimum sequence length to sample.
-    min_length: 100
+    min_length: 500
     # Maximum sequence length to sample.
-    max_length: 100
+    max_length: 500
     # gap between lengths to sample. i.e. this script will sample all lengths
     # in range(min_length, max_length, length_step)
-    length_step: 100
+    length_step: 1

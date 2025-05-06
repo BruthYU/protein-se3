@@ -41,6 +41,7 @@ class framediff_Sampler:
                 available_gpus = ''.join(
                     [str(x) for x in GPUtil.getAvailable(
                         order='memory', limit = 8)])
+                print(available_gpus)
                 self.device = f'cuda:{available_gpus[0]}'
             else:
                 self.device = f'cuda:{self.infer_conf.gpu_id}'

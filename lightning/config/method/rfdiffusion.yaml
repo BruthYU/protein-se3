@@ -20,7 +20,7 @@ dataset:
 
 inference:
   input_pdb: null
-  num_designs: 10
+  num_designs: 4
   design_startnum: 0
   symmetry: null
   recenter: True
@@ -41,7 +41,7 @@ inference:
   ckpt_path: last.ckpt
 
 contigmap:
-  contigs: [500-500]
+  contigs: [60-320]
   inpaint_seq: null
   inpaint_str: null
   provide_seq: null

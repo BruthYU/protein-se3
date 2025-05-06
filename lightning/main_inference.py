@@ -3,7 +3,9 @@ import time
 import hydra
 import logging
 from sampler import SInterface
-
+import sys
+sys.path.append('..')
+print(sys.path)
 
 LOG = logging.getLogger(__name__)
 @hydra.main(version_base=None, config_path="config", config_name="inference")

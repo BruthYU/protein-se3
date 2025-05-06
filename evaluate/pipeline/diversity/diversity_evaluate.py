@@ -1,10 +1,11 @@
+import sys
+sys.path.append('../../..')
 import os
 import glob
 import argparse
 
 from evaluate.pipeline.diversity.base import DiversityPipeline
-import sys
-sys.path.append('../..')
+
 
 def main(args):
 

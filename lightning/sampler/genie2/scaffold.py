@@ -9,7 +9,7 @@ from lightning.data.genie2.feat_utils import (
 	create_np_features_from_contig
 )
 from lightning.data.genie2.motif_utils import save_motif_pdb
-
+import numpy as np
 
 class ScaffoldSampler(BaseSampler):
 	"""
@@ -49,6 +49,9 @@ class ScaffoldSampler(BaseSampler):
 		motif_pdbs_dir = os.path.join(params['output_dir'], 'motif_pdbs')
 		if not os.path.exists(motif_pdbs_dir):
 			os.makedirs(motif_pdbs_dir)
+		masks_dir = os.path.join(params['output_dir'], 'masks')
+		if not os.path.exists(masks_dir):
+			os.makedirs(masks_dir)
 
 	def create_np_features(self, params):
 		"""
@@ -151,7 +154,10 @@ class ScaffoldSampler(BaseSampler):
 			
 			# Define
 			name = '{}_{}'.format(params['prefix'], params['offset'] + i)
-			
+
+			np.save(os.path.join(params['output_dir'], 'masks',
+								 name + '.npy'), np_features['fixed_sequence_mask'])
+
 			# Save pdb
 			output_pdb_filepath = os.path.join(
 				params['output_dir'], 'pdbs', 

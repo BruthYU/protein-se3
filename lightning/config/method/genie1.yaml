@@ -3,7 +3,7 @@ method_name: genie1
 dataset:
   cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/jsonl
   min_n_res: 60
-  max_n_res: 320
+  max_n_res: 500
   max_n_chain: 1
 
 diffusion:
@@ -72,10 +72,10 @@ inference:
   ckpt_path: ${hydra:runtime.cwd}/resource/genie1/best-epoch=263-train_loss=0.677.ckpt
   output_dir: ./genie1_outputs/
   batch_size: 1 # number of samples with once inference
-  num_batches: 10
+  num_batches: 4
   noise_scale: 0.6
-  min_n_res: 300
-  max_n_res: 300
+  min_n_res: 61
+  max_n_res: 320
 
 
 

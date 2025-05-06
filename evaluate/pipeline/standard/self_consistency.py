@@ -1,3 +1,7 @@
+import sys
+sys.path.append('../../..')
+sys.path.append('../../')
+print(sys.path)
 import os
 import time
 import tree
@@ -14,8 +18,7 @@ import GPUtil
 import random
 import string
 from typing import Optional
-import sys
-sys.path.append("../..")
+
 
 from lightning.model.framediff.analysis import metrics
 from preprocess.tools import utils as du
@@ -32,6 +35,7 @@ CA_IDX = residue_constants.atom_order['CA']
 class Pipeline:
     def __init__(self, conf: DictConfig):
         self._conf = conf
+        self._task = conf.task
         self._infer_conf = conf.inference
         self._sample_conf = self._infer_conf.samples
         self._pmpnn_dir = self._infer_conf.pmpnn_dir
@@ -80,6 +84,11 @@ class Pipeline:
         self.designs_dir = os.path.join(self._workspace, 'designs')
         assert not os.path.exists(self.designs_dir ), 'Output sequences directory existed'
         os.mkdir(self.designs_dir )
+
+        if self._task == "scaffold":
+            self.masks_dir = os.path.join(self._workspace, 'masks')
+            assert os.path.exists(self.masks_dir), 'Masks directory doesn\'t exist'
+            assert len(os.listdir(self.decoy_pdb_dir)) > 0, "Task name is scaffold, but there are no mask files"
 
 
 
@@ -158,13 +167,18 @@ class Pipeline:
 
         for mpnn_idx, (reference_pdb_path, mpnn_fasta_path) in enumerate(zip(reference_pdb_paths, mpnn_fasta_paths)):
             # Run ESMFold on each ProteinMPNN sequence and calculate metrics.
+            pure_pdb_name = self.references[mpnn_idx].split('.')[0]
             mpnn_results = {
+                'pdb_name': [],
                 'tm_score': [],
                 'sample_path': [],
                 'header': [],
                 'sequence': [],
                 'rmsd': [],
             }
+            if self._task == "scaffold":
+                mpnn_results.update({'motif_rmsd':[]})
+
             # if motif_mask is not None:
             #     # Only calculate motif RMSD if mask is specified.
             #     mpnn_results['motif_rmsd'] = []
@@ -186,12 +200,18 @@ class Pipeline:
                     sample_seq, sample_seq)
                 rmsd = metrics.calc_aligned_rmsd(
                     sample_feats['bb_positions'], esmf_feats['bb_positions'])
-                # if motif_mask is not None:
-                #     sample_motif = sample_feats['bb_positions'][motif_mask]
-                #     of_motif = esmf_feats['bb_positions'][motif_mask]
-                #     motif_rmsd = metrics.calc_aligned_rmsd(
-                #         sample_motif, of_motif)
-                #     mpnn_results['motif_rmsd'].append(motif_rmsd)
+
+                if self._task == "scaffold":
+
+                    motif_mask_path = os.path.join(self.masks_dir, f"{pure_pdb_name}.npy")
+                    motif_mask = np.load(motif_mask_path)
+                    sample_motif = sample_feats['bb_positions'][motif_mask]
+                    of_motif = esmf_feats['bb_positions'][motif_mask]
+                    motif_rmsd = metrics.calc_aligned_rmsd(
+                        sample_motif, of_motif)
+                    mpnn_results['motif_rmsd'].append(motif_rmsd)
+
+                mpnn_results['pdb_name'].append(pure_pdb_name)
                 mpnn_results['rmsd'].append(rmsd)
                 mpnn_results['tm_score'].append(tm_score)
                 mpnn_results['sample_path'].append(esmf_sample_path)
@@ -220,7 +240,7 @@ class Pipeline:
         return output
 
     def aggregate_scores(self):
-        designs_name = ''.join(random.choices(string.ascii_letters, k=4))
+        # designs_name = ''.join(random.choices(string.ascii_letters, k=4))
         score_file_names = os.listdir(self.scores_dir)
         score_file_names.sort()
         score_file_paths = [os.path.join(self.scores_dir, name) for name in score_file_names]
@@ -229,9 +249,11 @@ class Pipeline:
             df = pd.read_csv(score_file_path)
             min_index = df['rmsd'].idxmin()
             min_row = df.loc[[min_index]]
+            designs_name = min_row['pdb_name'].item()
+            min_row['domain'] = f'design_{designs_name}'
             best_sample_path = min_row['sample_path'].item()
             best_rows.append(min_row)
-            shutil.copy(best_sample_path, os.path.join(self.designs_dir,f'design_{designs_name}_{idx}.pdb'))
+            shutil.copy(best_sample_path, os.path.join(self.designs_dir,f'design_{designs_name}.pdb'))
 
         info_csv = pd.concat(best_rows, ignore_index=True)
         info_csv.to_csv(os.path.join(self._workspace, 'info.csv'), index=False)

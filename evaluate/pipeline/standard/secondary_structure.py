@@ -1,3 +1,6 @@
+import sys
+sys.path.append('../../..')
+print(sys.path)
 import os
 import glob
 import torch
@@ -28,8 +31,8 @@ class SecondaryStructure:
     def __init__(self, config: DictConfig):
         self.config = config
         self.workspace = self.config.inference.workspace
-        self.pdbs_dir = os.path.join(self.workspace, 'length_all')
-        self.designs_dir = os.path.join(self.workspace, 'design_all')
+        self.pdbs_dir = os.path.join(self.workspace, 'pdbs')
+        # self.designs_dir = os.path.join(self.workspace, 'design_all')
         self.results_dir = self.workspace
 
     def compute_secondary_structures(self):
@@ -58,12 +61,7 @@ class SecondaryStructure:
             columns = ['domain', 'generated_pct_helix', 'generated_pct_strand', 'generated_pct_ss',
                        'generated_pct_left_helix']
             file.write(','.join(columns) + '\n')
-        designed_secondary_filepath = os.path.join(self.results_dir, 'single_designed_secondary.csv')
-        assert not os.path.exists(designed_secondary_filepath), 'Output designed secondary filepath existed'
-        with open(designed_secondary_filepath, 'w') as file:
-            columns = ['domain', 'designed_pct_helix', 'designed_pct_strand', 'designed_pct_ss',
-                       'designed_pct_left_helix']
-            file.write(','.join(columns) + '\n')
+
 
         # Process generated pdbs
         for generated_filepath in tqdm(
@@ -89,27 +87,33 @@ class SecondaryStructure:
                 ))
 
         # Process designed pdbs
-        for design_filepath in tqdm(
-                glob.glob(os.path.join(self.designs_dir, '*.pdb')),
-                desc='Computing designed secondary diversity'
-        ):
-            # Parse filepath
-            domain = design_filepath.split('/')[-1].split('.')[0]
-
-            # Parse pdb file
-            output = parse_pdb_file(design_filepath)
-
-            # Parse secondary structures
-            ca_coords = torch.Tensor(output['ca_coords']).unsqueeze(0)
-            pct_ss = torch.sum(assign_secondary_structures(ca_coords, full=False), dim=1).squeeze(0) / ca_coords.shape[
-                1]
-            pct_left_helix = torch.sum(assign_left_handed_helices(ca_coords).squeeze(0)) / ca_coords.shape[1]
-
-            # Save
-            with open(designed_secondary_filepath, 'a') as file:
-                file.write('{},{:.3f},{:.3f},{:.3f},{:.3f}\n'.format(
-                    domain, pct_ss[0], pct_ss[1], pct_ss[0] + pct_ss[1], pct_left_helix
-                ))
+        # designed_secondary_filepath = os.path.join(self.results_dir, 'single_designed_secondary.csv')
+        # assert not os.path.exists(designed_secondary_filepath), 'Output designed secondary filepath existed'
+        # with open(designed_secondary_filepath, 'w') as file:
+        #     columns = ['domain', 'designed_pct_helix', 'designed_pct_strand', 'designed_pct_ss',
+        #                'designed_pct_left_helix']
+        #     file.write(','.join(columns) + '\n')
+        # for design_filepath in tqdm(
+        #         glob.glob(os.path.join(self.designs_dir, '*.pdb')),
+        #         desc='Computing designed secondary diversity'
+        # ):
+        #     # Parse filepath
+        #     domain = design_filepath.split('/')[-1].split('.')[0]
+        #
+        #     # Parse pdb file
+        #     output = parse_pdb_file(design_filepath)
+        #
+        #     # Parse secondary structures
+        #     ca_coords = torch.Tensor(output['ca_coords']).unsqueeze(0)
+        #     pct_ss = torch.sum(assign_secondary_structures(ca_coords, full=False), dim=1).squeeze(0) / ca_coords.shape[
+        #         1]
+        #     pct_left_helix = torch.sum(assign_left_handed_helices(ca_coords).squeeze(0)) / ca_coords.shape[1]
+        #
+        #     # Save
+        #     with open(designed_secondary_filepath, 'a') as file:
+        #         file.write('{},{:.3f},{:.3f},{:.3f},{:.3f}\n'.format(
+        #             domain, pct_ss[0], pct_ss[1], pct_ss[0] + pct_ss[1], pct_left_helix
+        #         ))
 
     def draw_heatmaps(self):
         generate_secondary_path = os.path.join(self.results_dir, 'single_generated_secondary.csv')
@@ -177,6 +181,7 @@ if __name__ == '__main__':
     print('Starting inference')
     start_time = time.time()
     secondary_pipeline = SecondaryStructure(conf)
-    secondary_pipeline.draw_heatmaps()
+    secondary_pipeline.compute_secondary_structures()
+    # secondary_pipeline.draw_heatmaps()
     elapsed_time = time.time() - start_time
     print(f'Finished in {elapsed_time:.2f}s')
