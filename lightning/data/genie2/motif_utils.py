@@ -3,7 +3,7 @@ import numpy as np
 
 def load_motif_contig(row):
 	row_name = row.target
-	row_length = row.length
+	row_length = str(row.length)
 	if isinstance(row_length, str):
 		total_lengths = [int(x) for x in row_length.split('-')]
 		if len(total_lengths) == 1:

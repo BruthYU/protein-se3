@@ -17,19 +17,18 @@ dataset:
       max_batch_size: 2
       max_num_res_squared: 500_000
 
-
 inference:
-  input_pdb: ${hydra:runtime.cwd}/resource/rfdiffusion/design25/1bcf.pdb
-  num_designs: 1
+  pure_input_pdb: 4zyp
+  input_pdb: ${hydra:runtime.cwd}/resource/rfdiffusion/design25/${inference.pure_input_pdb}.pdb
+  num_designs: 4
   design_startnum: 0
   symmetry: null
   recenter: True
   radius: 10.0
   model_only_neighbors: False
-  output_dir: ./rfdiffusion_outputs/
-  output_prefix: samples/design
-  mask_output_prefix: masks/design
-
+  output_dir: ./${inference.pure_input_pdb}
+  output_prefix: samples/${inference.pure_input_pdb}
+  mask_output_prefix: masks/${inference.pure_input_pdb}
   write_trajectory: True
   scaffold_guided: False
   model_runner: SelfConditioning
@@ -43,11 +42,11 @@ inference:
   ckpt_path: Base_ckpt.pt
 
 contigmap:
-  contigs: ["8-15,A92-99,16-30,A123-130,16-30,A47-54,16-30,A18-25,8-15"]
+  contigs: ["10-40,A422-436,10-40"]
   inpaint_seq: null
   inpaint_str: null
   provide_seq: null
-  length: 96-152
+  length: "30-50"
 
 model:
   n_extra_block: 4

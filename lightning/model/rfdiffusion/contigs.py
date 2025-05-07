@@ -137,8 +137,8 @@ class ContigMap:
             sampled_mask = []
             sampled_mask_length = 0
             # allow receptor chain to be last in contig string
-            if all([i[0].isalpha() for i in contig_list[-1].split("/")]):
-                contig_list[-1] = f"{contig_list[-1]}/0"
+            # if all([i[0].isalpha() for i in contig_list[-1].split("/")]):
+            #     contig_list[-1] = f"{contig_list[-1]}/0"
             for con in contig_list:
                 if (
                     all([i[0].isalpha() for i in con.split("/")[:-1]])

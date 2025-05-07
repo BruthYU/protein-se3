@@ -46,6 +46,9 @@ class rfdiffusion_Sampler:
             start_time = time.time()
             out_prefix = f"{self.selected_sampler.inf_conf.output_prefix}_{i_des}"
             mask_out_prefix = f"{self.selected_sampler.inf_conf.mask_output_prefix}_{i_des}"
+
+            out_prefix = os.path.join(f"{self.selected_sampler.inf_conf.output_dir}", out_prefix)
+            mask_out_prefix = os.path.join(f"{self.selected_sampler.inf_conf.output_dir}", mask_out_prefix)
             self.log.info(f"Making design {out_prefix}")
             self.log.info(f"Saving masks {mask_out_prefix}")
 
@@ -124,48 +127,48 @@ class rfdiffusion_Sampler:
                 bfacts=bfacts,
             )
 
-            # run metadata
-            trb = dict(
-                config=OmegaConf.to_container(self.selected_sampler._conf, resolve=True),
-                plddt=plddt_stack.cpu().numpy(),
-                device=torch.cuda.get_device_name(torch.cuda.current_device())
-                if torch.cuda.is_available()
-                else "CPU",
-                time=time.time() - start_time,
-            )
-            if hasattr(self.selected_sampler, "contig_map"):
-                for key, value in self.selected_sampler.contig_map.get_mappings().items():
-                    trb[key] = value
-            with open(f"{out_prefix}.trb", "wb") as f_out:
-                pickle.dump(trb, f_out)
-
-            if self.selected_sampler.inf_conf.write_trajectory:
-                # trajectory pdbs
-                traj_prefix = (
-                        os.path.dirname(out_prefix) + "/traj/" + os.path.basename(out_prefix)
-                )
-                os.makedirs(os.path.dirname(traj_prefix), exist_ok=True)
-
-                out = f"{traj_prefix}_Xt-1_traj.pdb"
-                writepdb_multi(
-                    out,
-                    denoised_xyz_stack,
-                    bfacts,
-                    final_seq.squeeze(),
-                    use_hydrogens=False,
-                    backbone_only=False,
-                    chain_ids=self.selected_sampler.chain_idx,
-                )
-
-                out = f"{traj_prefix}_pX0_traj.pdb"
-                writepdb_multi(
-                    out,
-                    px0_xyz_stack,
-                    bfacts,
-                    final_seq.squeeze(),
-                    use_hydrogens=False,
-                    backbone_only=False,
-                    chain_ids=self.selected_sampler.chain_idx,
-                )
+            # # run metadata
+            # trb = dict(
+            #     config=OmegaConf.to_container(self.selected_sampler._conf, resolve=True),
+            #     plddt=plddt_stack.cpu().numpy(),
+            #     device=torch.cuda.get_device_name(torch.cuda.current_device())
+            #     if torch.cuda.is_available()
+            #     else "CPU",
+            #     time=time.time() - start_time,
+            # )
+            # if hasattr(self.selected_sampler, "contig_map"):
+            #     for key, value in self.selected_sampler.contig_map.get_mappings().items():
+            #         trb[key] = value
+            # with open(f"{out_prefix}.trb", "wb") as f_out:
+            #     pickle.dump(trb, f_out)
+            #
+            # if self.selected_sampler.inf_conf.write_trajectory:
+            #     # trajectory pdbs
+            #     traj_prefix = (
+            #             os.path.dirname(out_prefix) + "/traj/" + os.path.basename(out_prefix)
+            #     )
+            #     os.makedirs(os.path.dirname(traj_prefix), exist_ok=True)
+            #
+            #     out = f"{traj_prefix}_Xt-1_traj.pdb"
+            #     writepdb_multi(
+            #         out,
+            #         denoised_xyz_stack,
+            #         bfacts,
+            #         final_seq.squeeze(),
+            #         use_hydrogens=False,
+            #         backbone_only=False,
+            #         chain_ids=self.selected_sampler.chain_idx,
+            #     )
+            #
+            #     out = f"{traj_prefix}_pX0_traj.pdb"
+            #     writepdb_multi(
+            #         out,
+            #         px0_xyz_stack,
+            #         bfacts,
+            #         final_seq.squeeze(),
+            #         use_hydrogens=False,
+            #         backbone_only=False,
+            #         chain_ids=self.selected_sampler.chain_idx,
+            #     )
 
             self.log.info(f"Finished design in {(time.time() - start_time) / 60:.2f} minutes")
