@@ -1,6 +1,6 @@
 # @package _global_
 method_name: rfdiffusion
-is_training: True
+is_training: False
 
 dataset:
     cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/jsonl
@@ -19,8 +19,8 @@ dataset:
 
 
 inference:
-  input_pdb: null
-  num_designs: 4
+  input_pdb: ${hydra:runtime.cwd}/resource/rfdiffusion/design25/1bcf.pdb
+  num_designs: 1
   design_startnum: 0
   symmetry: null
   recenter: True
@@ -28,6 +28,8 @@ inference:
   model_only_neighbors: False
   output_dir: ./rfdiffusion_outputs/
   output_prefix: samples/design
+  mask_output_prefix: masks/design
+
   write_trajectory: True
   scaffold_guided: False
   model_runner: SelfConditioning
@@ -38,14 +40,14 @@ inference:
   deterministic: False
   trb_save_ckpt_path: null
   schedule_directory_path: null
-  ckpt_path: last.ckpt
+  ckpt_path: Base_ckpt.pt
 
 contigmap:
-  contigs: [60-320]
+  contigs: ["8-15,A92-99,16-30,A123-130,16-30,A47-54,16-30,A18-25,8-15"]
   inpaint_seq: null
   inpaint_str: null
   provide_seq: null
-  length: null
+  length: 96-152
 
 model:
   n_extra_block: 4

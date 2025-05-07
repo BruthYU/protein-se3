@@ -45,7 +45,9 @@ class rfdiffusion_Sampler:
 
             start_time = time.time()
             out_prefix = f"{self.selected_sampler.inf_conf.output_prefix}_{i_des}"
+            mask_out_prefix = f"{self.selected_sampler.inf_conf.mask_output_prefix}_{i_des}"
             self.log.info(f"Making design {out_prefix}")
+            self.log.info(f"Saving masks {mask_out_prefix}")
 
             # Duplicated PDB File
             if self.selected_sampler.inf_conf.cautious and os.path.exists(out_prefix + ".pdb"):
@@ -93,6 +95,7 @@ class rfdiffusion_Sampler:
 
             # Save outputs
             os.makedirs(os.path.dirname(out_prefix), exist_ok=True)
+            os.makedirs(os.path.dirname(mask_out_prefix), exist_ok=True)
             final_seq = seq_stack[-1]
 
             # Output glycines, except for motif region
@@ -105,6 +108,11 @@ class rfdiffusion_Sampler:
             bfacts[torch.where(torch.argmax(seq_init, dim=-1) == 21, True, False)] = 0
             # pX0 last step
             out = f"{out_prefix}.pdb"
+            mask_out = f"{mask_out_prefix}.npy"
+
+            # save diffusion mask
+            motif_mask = self.selected_sampler.diffusion_mask[0].numpy()
+            np.save(mask_out, motif_mask)
 
             # Now don't output sidechains
             writepdb(

@@ -81,14 +81,16 @@ class Pipeline:
         assert not os.path.exists(self.jsonl_dir), 'Output scores directory existed'
         os.mkdir(self.jsonl_dir)
 
+
+
         self.designs_dir = os.path.join(self._workspace, 'designs')
         assert not os.path.exists(self.designs_dir ), 'Output sequences directory existed'
         os.mkdir(self.designs_dir )
 
-        # if self._task == "scaffold":
-        #     self.masks_dir = os.path.join(self._workspace, 'masks')
-        #     assert os.path.exists(self.masks_dir), 'Masks directory doesn\'t exist'
-        #     assert len(os.listdir(self.decoy_pdb_dir)) > 0, "Task name is scaffold, but there are no mask files"
+
+        self.masks_dir = os.path.join(self._workspace, 'masks')
+        assert os.path.exists(self.masks_dir), 'Masks directory doesn\'t exist'
+        assert len(os.listdir(self.decoy_pdb_dir)) > 0, "Task is scaffold, but there are no mask files"
 
 
 
@@ -119,6 +121,20 @@ class Pipeline:
             f'--output_path={output_path}',
         ])
         _ = process.wait()
+
+        fixed_jsonl_path = os.path.join(self.jsonl_dir, f"fixed_positions.jsonl")
+        process = subprocess.Popen([
+            'python',
+            f'{self._pmpnn_dir}/helper_scripts/multi_make_fixed_positions.py',
+            f'--input_path={output_path}',
+            f'--mask_folder={self.masks_dir}',
+            f'--output_path={fixed_jsonl_path}',
+        ])
+        _ = process.wait()
+
+
+
+
         num_tries = 0
         ret = -1
         pmpnn_args = [
@@ -128,6 +144,8 @@ class Pipeline:
             os.path.abspath(self.sequences_dir),
             '--jsonl_path',
             os.path.abspath(output_path),
+            '--fixed_positions_jsonl',
+            os.path.abspath(fixed_jsonl_path),
             '--num_seq_per_target',
             str(self._sample_conf.seq_per_sample),
             '--sampling_temp',
@@ -175,9 +193,9 @@ class Pipeline:
                 'header': [],
                 'sequence': [],
                 'rmsd': [],
+                'motif_rmsd': []
             }
-            # if self._task == "scaffold":
-            #     mpnn_results.update({'motif_rmsd':[]})
+
 
             # if motif_mask is not None:
             #     # Only calculate motif RMSD if mask is specified.
@@ -201,15 +219,16 @@ class Pipeline:
                 rmsd = metrics.calc_aligned_rmsd(
                     sample_feats['bb_positions'], esmf_feats['bb_positions'])
 
-                # if self._task == "scaffold":
-                #
-                #     motif_mask_path = os.path.join(self.masks_dir, f"{pure_pdb_name}.npy")
-                #     motif_mask = np.load(motif_mask_path)
-                #     sample_motif = sample_feats['bb_positions'][motif_mask]
-                #     of_motif = esmf_feats['bb_positions'][motif_mask]
-                #     motif_rmsd = metrics.calc_aligned_rmsd(
-                #         sample_motif, of_motif)
-                #     mpnn_results['motif_rmsd'].append(motif_rmsd)
+
+                # calculate motif rmsd
+                motif_mask_path = os.path.join(self.masks_dir, f"{pure_pdb_name}.npy")
+                motif_mask = np.load(motif_mask_path)
+                sample_motif = sample_feats['bb_positions'][motif_mask]
+                of_motif = esmf_feats['bb_positions'][motif_mask]
+                motif_rmsd = metrics.calc_aligned_rmsd(
+                    sample_motif, of_motif)
+                mpnn_results['motif_rmsd'].append(motif_rmsd)
+
 
                 mpnn_results['pdb_name'].append(pure_pdb_name)
                 mpnn_results['rmsd'].append(rmsd)
@@ -228,6 +247,7 @@ class Pipeline:
             shutil.rmtree(self.structures_dir)
             shutil.rmtree(self.sequences_dir)
             shutil.rmtree(self.jsonl_dir)
+
 
 
     def run_folding(self, sequence, save_path):

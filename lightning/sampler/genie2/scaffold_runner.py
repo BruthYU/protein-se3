@@ -16,6 +16,7 @@ class ScaffoldRunner(MultiProcessor):
 		# Initialize
 		tasks = []
 		task_df = pd.read_csv(infer_conf.csv_path)
+		task_df['target'] = task_df['target'].str.lower()
 		for idx, row in task_df.iterrows():
 			tasks.append({'motif_row': row})
 		return tasks
