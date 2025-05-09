@@ -143,9 +143,9 @@ interpolant:
 
 inference:
   seed: 123
-  task: unconditional
+  task: scaffolding
   output_dir: frameflow_outputs/
-  ckpt_path: ${hydra:runtime.cwd}/resource/frameflow/cluster_length_batch.ckpt
+  ckpt_path: ${hydra:runtime.cwd}/resource/frameflow/scaffolding.ckpt
   samples:
     samples_per_length: 4
     min_length: 61
@@ -154,10 +154,10 @@ inference:
     overwrite: False
     csv_path: ${hydra:runtime.cwd}/resource/frameflow/benchmark.csv
     target_dir: ${hydra:runtime.cwd}/resource/frameflow/targets
-    samples_per_target: 10
+    samples_per_target: 4
     num_batch: 1
     # Subset of targets to scaffold.
-    target_subset: ['5YUI', '5IUS', '3IXT', '1BCF', '1QJG', '6X93', '1PRW', '1YCR', '5TPN'] # e.g. ['5TPN']
+    target_subset: null # e.g. ['5TPN']
     # Subset of lengths to sample. If null, sample all targets.
     length_subset: null
 

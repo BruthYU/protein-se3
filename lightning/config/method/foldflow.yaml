@@ -166,7 +166,7 @@ inference:
   output_dir: ./foldflow_outputs
 
   # Path to model weights.
-  weights_path: ${hydra:runtime.cwd}/resource/foldflow/last.ckpt
+  weights_path: ${hydra:runtime.cwd}/resource/foldflow/best-epoch=79-ot.ckpt
   flow:
     # Number of steps.
     num_t: 100
@@ -177,13 +177,13 @@ inference:
 
   samples:
     # Number of backbone samples per sequence length.
-    samples_per_length: 10
+    samples_per_length: 4
     # Number of ESMFdold samples per backbone sample.
     seq_per_sample: 8
     # Minimum sequence length to sample.
-    min_length: 200
+    min_length: 61
     # Maximum sequence length to sample.
-    max_length: 500
+    max_length: 320
     # gap between lengths to sample. i.e. this script will sample all lengths
     # in range(min_length, max_length, length_step)
-    length_step: 100
+    length_step: 1

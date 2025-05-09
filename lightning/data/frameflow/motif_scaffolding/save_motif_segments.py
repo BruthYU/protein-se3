@@ -45,7 +45,7 @@ def create_pad_feats(pad_amt):
 
 def process_motif_row(target_dir, motif_row):
     """Parse row in the motif CSV."""
-    motif_path = os.path.join(target_dir,f'{motif_row.target}.pdb')
+    motif_path = os.path.join(target_dir,f"{motif_row.target.lower()}.pdb")
     motif_chain_feats = du.parse_pdb_feats(
         'motif', motif_path, chain_id=None)
     return {

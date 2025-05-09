@@ -116,7 +116,7 @@ class ScaffoldingDataset(data.Dataset):
         }
 
 
-def get_sampled_mask(contigs, length, rng=None, num_tries=1000000):
+def get_sampled_mask(contigs, length, rng=None, num_tries=500000):
     '''
     Parses contig and length argument to sample scaffolds and motifs.
 
@@ -224,11 +224,14 @@ def save_traj(
         residues if there are any.
     """
 
+
     # Write sample.
+    motif_mask = (1 - diffuse_mask).astype(bool)
     diffuse_mask = diffuse_mask.astype(bool)
     sample_path = os.path.join(output_dir, 'sample.pdb')
     prot_traj_path = os.path.join(output_dir, 'bb_traj.pdb')
     x0_traj_path = os.path.join(output_dir, 'x0_traj.pdb')
+    motif_mask_path = os.path.join(output_dir, 'motif_mask.npy')
 
     # Use b-factors to specify which residues are diffused.
     b_factors = np.tile((diffuse_mask * 100)[:, None], (1, 37))
@@ -251,6 +254,10 @@ def save_traj(
         b_factors=b_factors,
         aatype=aatype
     )
+
+
+    np.save(motif_mask_path, motif_mask)
+
     return {
         'sample_path': sample_path,
         'traj_path': prot_traj_path,
