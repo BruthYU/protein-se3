@@ -2,6 +2,7 @@
 method_name: frameflow
 dataset:
   cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/processed_pdb_60_320
+#  cache_dir: ${hydra:runtime.cwd}/../preprocess/.cache/jsonl
   cluster_path: ${hydra:runtime.cwd}/data/clusters-by-entity-30.txt
   # Available tasks: hallucination, inpainting
   task: inpainting
