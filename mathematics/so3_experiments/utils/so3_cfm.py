@@ -3,11 +3,11 @@ import torch
 from scipy.spatial.transform import Rotation
 from geomstats._backend import _backend_config as _config
 from .optimal_transport import SO3OTPlanSampler
-from lightning.data.foldflow.so3_helpers import so3_relative_angle, log
-from lightning.data.foldflow.so3_condflowmatcher import SO3ConditionalFlowMatcher
+from protein.data.foldflow.so3_helpers import so3_relative_angle, log
+from protein.data.foldflow.so3_condflowmatcher import SO3ConditionalFlowMatcher
 from einops import rearrange
 from functorch import vmap
-from lightning.data.foldflow.igso3 import _batch_sample
+from protein.data.foldflow.igso3 import _batch_sample
 
 
 class SO3OptimalTransportConditionalFlowMatcher(SO3ConditionalFlowMatcher):

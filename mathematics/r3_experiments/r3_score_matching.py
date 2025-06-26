@@ -11,7 +11,7 @@ from utils.plotting import plot_r3
 
 from scipy.stats import wasserstein_distance_nd
 from models.models import MLP
-from lightning.data.framediff.r3_diffuser import R3Diffuser
+from protein.data.framediff.r3_diffuser import R3Diffuser
 torch.manual_seed(0)
 from data.datasets import R3_SDE_Dataset, concat_np_features
 

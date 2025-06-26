@@ -18,15 +18,15 @@ from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 
 from utils.plotting import plot_so3
 from utils.optimal_transport import so3_wasserstein as wasserstein
-from lightning.data.foldflow.so3_helpers import norm_SO3, expmap
-from lightning.data.foldflow.so3_condflowmatcher import SO3ConditionalFlowMatcher
+from protein.data.foldflow.so3_helpers import norm_SO3, expmap
+from protein.data.foldflow.so3_condflowmatcher import SO3ConditionalFlowMatcher
 from mathematics.so3_experiments.models.models import MLP
 from torch.utils.data import DataLoader
 from data.datasets import SpecialOrthogonalGroup, SDE_Dataset, concat_np_features
 
 from geomstats._backend import _backend_config as _config
-from lightning.data.framediff.so3_diffuser import SO3Diffuser
-from lightning.data.framediff.so3_utils import Log, Exp
+from protein.data.framediff.so3_diffuser import SO3Diffuser
+from protein.data.framediff.so3_utils import Log, Exp
 
 _config.DEFAULT_DTYPE = torch.cuda.FloatTensor
 savedir = "results/score_matching"
