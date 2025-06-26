@@ -4,7 +4,7 @@ from preprocess.tools import residue_constants
 from evaluate.openfold.utils import rigid_utils as ru
 from evaluate.openfold.data import data_transforms
 from evaluate.openfold.utils import feats
-from protein.data.frameflow.utils import adjust_oxygen_pos
+from lightning_protein.data.frameflow.utils import adjust_oxygen_pos
 
 Rigid = ru.Rigid
 Rotation = ru.Rotation
