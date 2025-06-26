@@ -20,7 +20,7 @@ import string
 from typing import Optional
 
 
-from protein.model.framediff.analysis import metrics
+from lightning_protein.model.framediff.analysis import metrics
 from preprocess.tools import utils as du
 from preprocess.tools import residue_constants
 from typing import Dict

@@ -13,8 +13,8 @@ from scipy.spatial.transform import Rotation
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 from utils.plotting import plot_r3
 from scipy.stats import wasserstein_distance_nd
-from protein.data.foldflow.so3_helpers import norm_SO3, expmap, rotmat_to_rotvec
-from protein.data.foldflow.condflowmatcher import ConditionalFlowMatcher
+from lightning_protein.data.foldflow.so3_helpers import norm_SO3, expmap, rotmat_to_rotvec
+from lightning_protein.data.foldflow.condflowmatcher import ConditionalFlowMatcher
 from mathematics.r3_experiments.models.models import MLP
 from torch.utils.data import DataLoader
 from data.datasets import R3Dataset

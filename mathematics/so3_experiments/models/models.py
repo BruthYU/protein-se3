@@ -1,10 +1,10 @@
 """Copyright (c) Dreamfold."""
 import torch
-from protein.data.foldflow.so3_helpers import tangent_space_proj
+from lightning_protein.data.foldflow.so3_helpers import tangent_space_proj
 from einops import rearrange
 from preprocess.tools import utils as du
 
-from protein.data.framediff.so3_diffuser import igso3_expansion, score
+from lightning_protein.data.framediff.so3_diffuser import igso3_expansion, score
 from ..utils.ddpm_utils import so3vec_to_rotation, rotation_to_so3vec, quaternion_1ijk_to_rotation_matrix
 
 # torch.set_default_dtype(torch.float64)

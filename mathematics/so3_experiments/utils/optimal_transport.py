@@ -5,7 +5,7 @@ from typing import Optional
 import ot as pot
 import numpy as np
 import torch
-from protein.data.foldflow.so3_helpers import so3_relative_angle
+from lightning_protein.data.foldflow.so3_helpers import so3_relative_angle
 import warnings
 
 warnings.filterwarnings("ignore")

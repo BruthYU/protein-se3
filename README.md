@@ -70,7 +70,7 @@ python preprocess/build_cache.py
 
 <details>
 
-Training and inference of all integrated methods are implemented in the lightning workspace (`protein-se3\lightning`). You can refer to this  [README.md](protein/README.md) for more details.
+Training and inference of all integrated methods are implemented in the lightning workspace (`protein-se3\lightning`). You can refer to this  [README.md](lightning_protein/README.md) for more details.
 
 
 </details>
