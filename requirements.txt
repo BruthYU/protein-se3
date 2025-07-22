@@ -7,7 +7,6 @@ lmdb==1.5.1
 dm-tree==0.1.7
 scipy==1.10.1
 biopython==1.80
-pandas==1.4.0
 ipdb==0.13.11
 ml_collections==0.1.1
 mdtraj==1.10.2
@@ -24,6 +23,7 @@ e3nn==0.3.3
 pynvml==11.0.0
 decorator==5.1.0
 fair-esm==2.0.0
+pandas==1.4.0
 
 # installation of following packages requires environment information
 # pip install torch-scatter -f https://data.pyg.org/whl/torch-2.2.1+cu118.html
