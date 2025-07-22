@@ -19,7 +19,7 @@
 
 
 
-
+---
 ## Supported Methods
 | **Name**    | **Paper**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | **Venue** |  **Date**  |                                                                               **Code**                                                                               |
 |-------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------:|:----------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
@@ -30,9 +30,9 @@
 | FrameFlow   | ![Star](https://img.shields.io/github/stars/microsoft/protein-frame-flow?style=social&label=Star) <br> [**Improved motif-scaffolding with SE(3) flow matching**](https://openreview.net/forum?id=fa1ne8xDGn) <br>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |   TMLR    | 2024-07-17 |                                                   [Github](https://github.com/microsoft/protein-frame-flow)                                                          |
 | RFdiffusion | ![Star](https://img.shields.io/github/stars/RosettaCommons/RFdiffusion?style=social&label=Star) <br> [**De novo design of protein structure and function with RFdiffusion**](https://www.nature.com/articles/s41586-023-06415-8) <br>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |  Nature   | 2023-07-11 |                                                            [Github](https://github.com/RosettaCommons/RFdiffusion)                                                                                                          |
 
+
+---
 ## Installation
-
-
 To get started, simply create conda environment and run pip installation:
 
 ```shell
@@ -49,10 +49,11 @@ cd protein-se3/lightning/model/rfdiffusion/SE3Transformer
 python setup.py install
 ```
 
+---
 ## Usage
 In this section we will demonstrate how to use Protein-SE(3).
 
----
+
 ### How to Preprocess Dataset and Build Cache
 <details>
 
@@ -88,7 +89,7 @@ We evaluate different protein structure design methods on two tasks: **Unconditi
 
 </details>
 
-
+---
 ## Benchmark Results
 
 ### Unconditional Scaffolding across Varying Lengths
