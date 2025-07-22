@@ -2,18 +2,15 @@ import os
 import glob
 import torch
 import shutil
-import subprocess
 import numpy as np
-import pandas as pd
 from tqdm import tqdm
 from collections import OrderedDict
 
-from evaluate.pipeline.standard.base import Pipeline
-from evaluate.pipeline.utils.parse import parse_tm_file
+from evaluate.backup.base import Pipeline
 from evaluate.pipeline.utils.align import compute_rigid_alignment
 
 import sys
-sys.path.append('../..')
+sys.path.append('..')
 class ScaffoldPipeline(Pipeline):
 	"""
 	Standard evaluation pipeline on motif scaffolding outputs. Evaluation

@@ -14,6 +14,12 @@
 </div>
 
 
+## Framework Overview
+![](document/framework.jpg)
+
+
+
+
 ## Supported Methods
 | **Name**    | **Paper**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | **Venue** |  **Date**  |                                                                               **Code**                                                                               |
 |-------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------:|:----------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
@@ -77,4 +83,19 @@ Training and inference of all integrated methods are implemented in the lightnin
 
 ### How to Evaluate Different Methods
 <details>
+
+We evaluate different protein structure design methods on two tasks: **Unconditional Scaffolding** and **Motif Scaffolding**. Please refer to [README.md](evaluate/README.md) for more detailed information.
+
 </details>
+
+
+## Benchmark Results
+
+### Unconditional Scaffolding across Varying Lengths
+![](document/unconditional.png)
+
+### Motif Scaffolding on Design24
+![](document/motif.png)
+
+### Secondary Structure Analysis
+![](document/secondary_structure.png)

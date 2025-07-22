@@ -5,7 +5,7 @@
 
 # Quality (scTM scRMSD)
 cd pipeline/standard/
-python standard_evaluate.py --version unconditional --rootdir ../../workspace
+python self_consistency.py  --rootdir ../../workspace
 
 
 # Diversity Choice
@@ -24,6 +24,7 @@ cd ../../workspace
 
 # Novelty (FoldSeek)
 # if the database has been downloaded already, comment following lines
+
 #mkdir fs_db
 cd fs_db
 #foldseek databases PDB pdb tmp

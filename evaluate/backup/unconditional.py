@@ -1,7 +1,7 @@
 import os
 import shutil
 
-from evaluate.pipeline.standard.base import Pipeline
+from evaluate.backup.base import Pipeline
 
 
 class UnconditionalPipeline(Pipeline):

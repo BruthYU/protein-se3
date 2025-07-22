@@ -177,7 +177,7 @@ class SecondaryStructure:
 
 
 if __name__ == '__main__':
-    conf = OmegaConf.load('config_standard.yaml')
+    conf = OmegaConf.load('../../backup/config_standard.yaml')
     print('Starting inference')
     start_time = time.time()
     secondary_pipeline = SecondaryStructure(conf)

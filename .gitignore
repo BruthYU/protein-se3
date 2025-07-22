@@ -31,8 +31,9 @@ evaluate/eval_data
 
 /mathematics/r3_experiments/results/
 
-/evaluate/extract_files/
+
 /preprocess/processed_pdb/
 /lightning_protein/resource/
 /mathematics/data_construction/
 /mathematics/plot_se3/
+/evaluate/backup/

@@ -4,7 +4,7 @@ import argparse
 from tqdm import tqdm
 from evaluate.pipeline.utils.process import MultiProcessor
 import sys
-sys.path.append('../..')
+sys.path.append('..')
 
 def load_inverse_fold_model(name, device):
 	"""
@@ -72,10 +72,10 @@ def load_pipeline(name, inverse_fold_model, fold_model):
 	"""
 	print('Load pipeline')
 	if name == 'unconditional':
-		from evaluate.pipeline.standard.unconditional import UnconditionalPipeline
+		from evaluate.backup.unconditional import UnconditionalPipeline
 		return UnconditionalPipeline(inverse_fold_model, fold_model)
 	elif name == 'scaffold':
-		from evaluate.pipeline.standard.scaffold import ScaffoldPipeline
+		from evaluate.backup.scaffold import ScaffoldPipeline
 		return ScaffoldPipeline(inverse_fold_model, fold_model)
 	else:
 		print('Invalid pipeline: {}'.format(name))
