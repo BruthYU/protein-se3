@@ -2,10 +2,12 @@
 # 2. 按顺序执行即可完整评估Designability, Diversity, Novelty
 
 
+# conda activate [env_name]
+
 
 # Quality (scTM scRMSD)
 cd pipeline/standard/
-python self_consistency.py  --rootdir ../../workspace
+python self_consistency.py
 
 
 # Diversity Choice
@@ -33,4 +35,4 @@ foldseek easy-search ../designs pdb ../aln.m8 ../tmpSearchFolder --format-output
 
 
 cd ../..
-python final_result.py
+python final_result_un.py
