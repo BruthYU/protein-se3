@@ -13,6 +13,7 @@
 ```
 - Step 3: Run the evaluation shell script 
 ```shell
+  cd evaluate/
   sh run_evaluation_un.sh
 ```
 The evaluation results will be written into ```evaluate/workspace/final_result_un.csv``` 
