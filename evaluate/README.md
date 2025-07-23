@@ -1,5 +1,5 @@
 # Evaluation
-First create a folder as the evaluation worksapce:
+First, create a folder as the evaluation worksapce:
 ```shell
   cd evaluate
   mkdir workspace
