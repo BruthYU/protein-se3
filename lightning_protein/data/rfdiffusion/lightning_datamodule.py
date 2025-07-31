@@ -23,7 +23,7 @@ class rfdiffusion_Lightning_Datamodule(pl.LightningDataModule):
         self.data_module = self.init_data_module(self.method_name)
         self.cache_module = self.init_cache_module(self.method_name)
         # import utils for to create dataloader
-        self.dataloader = importlib.import_module(f'lightning.data.{self.method_name}.dataloader')
+        self.dataloader = importlib.import_module(f'lightning_protein.data.{self.method_name}.dataloader')
 
 
 
