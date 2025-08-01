@@ -43,7 +43,7 @@ python so3_ddpm.py
 | ![](../document/so3_crop/bunny_group.png) | ![](../document/so3_crop/bunny/ddpm.jpg) | ![](../document/so3_crop/bunny/score_matching.jpg) | ![](../document/so3_crop/bunny/flow_matching.jpg) |
 |-------------------------------------------|------------------------------------------|---------------------------------------------------|---------------------------------------------------|
 
-| ![](../document/so3_crop/spiral_group.png) | ![](../document/so3_crop/spiral/ddpm.jpg) | ![](../document/rso3_crop/spiral/score_matching.jpg) | ![](../document/so3_crop/spiral/flow_matching.jpg) |
+| ![](../document/so3_crop/spiral_group.png) | ![](../document/so3_crop/spiral/ddpm.jpg) | ![](../document/so3_crop/spiral/score_matching.jpg) | ![](../document/so3_crop/spiral/flow_matching.jpg) |
 |--------------------------------------------|-------------------------------------------|--------------------------------------------------|-------------------------------------------------|
 
 
