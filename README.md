@@ -6,6 +6,7 @@
 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-red.svg)](https://opensource.org/licenses/MIT)
+[![arXiv](https://img.shields.io/badge/arXiv-2507.20243-B31B1B.svg)](https://arxiv.org/abs/2507.20243)
 ![Static Badge](https://img.shields.io/badge/Pytorch-Lightning-yellow)
 ![Static Badge](https://img.shields.io/badge/Config-Hydra-blue)
 ![Static Badge](https://img.shields.io/badge/PRs-Welcom-green)
